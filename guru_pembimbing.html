@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Data Guru Pembimbing</title>
+  <!-- Google Font: Source Sans Pro -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- DataTables -->
+  <link rel="stylesheet" href="plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+  <link rel="stylesheet" href="plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+  <!-- Theme style -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+</head>
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
+  <!-- Navbar -->
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+      </li>
+      <li class="nav-item d-none d-sm-inline-block">
+        <a href="index.html" class="nav-link">Home</a>
+      </li>
+      <li class="nav-item d-none d-sm-inline-block">
+        <a href="#" class="nav-link">Contact</a>
+      </li>
+    </ul>
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="#" role="button" onclick="logout()">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+      </li>
+    </ul>
+  </nav>
+  <!-- /.navbar -->
+  <!-- Main Sidebar Container -->
+  <aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <a href="index.html" class="brand-link">
+      <img src="dist/img/AdminLTELogo.png" alt="ePKL Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
+      <span class="brand-text font-weight-light">ePKL v2</span>
+    </a>
+    <div class="sidebar">
+      <nav class="mt-2">
+        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
+          <li class="nav-item">
+            <a href="index.html" class="nav-link">
+              <i class="nav-icon fas fa-tachometer-alt"></i>
+              <p>Dashboard</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="data_siswa.html" class="nav-link">
+              <i class="nav-icon fas fa-users"></i>
+              <p>Data Siswa</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="perusahaan.html" class="nav-link">
+              <i class="nav-icon fas fa-building"></i>
+              <p>Data Tempat PKL</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="data_presensi.html" class="nav-link">
+              <i class="nav-icon fas fa-calendar-check"></i>
+              <p>Data Presensi</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="guru_pembimbing.html" class="nav-link active">
+              <i class="nav-icon fas fa-chalkboard-teacher"></i>
+              <p>Data Guru Pembimbing</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link">
+              <i class="nav-icon fas fa-folder"></i>
+              <p>Data Other 1</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link">
+              <i class="nav-icon fas fa-folder-open"></i>
+              <p>Data Other 2</p>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </aside>
+  <!-- Content Wrapper -->
+  <div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Data Guru Pembimbing</h1>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header">
+                <div class="row">
+                  <div class="col-md-8">
+                    <a href="tambah_guru_pembimbing.html" class="btn btn-primary">
+                      <i class="fas fa-plus"></i> Tambah Data
+                    </a>
+                    <a href="import_excel_guru_pembimbing.html" class="btn btn-success">
+                      <i class="fas fa-file-excel"></i> Import Excel
+                    </a>
+                    <button type="button" class="btn btn-info" id="downloadTemplate">
+                      <i class="fas fa-download"></i> Template Excel
+                    </button>
+                    <button type="button" class="btn btn-warning" id="exportExcel">
+                      <i class="fas fa-file-export"></i> Export Excel
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="refreshData">
+                      <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                  </div>
+                </div>
+                <div class="row mt-2">
+                  <div class="col-md-4">
+                    <input type="text" id="filterNama" class="form-control" placeholder="Filter Nama Guru Pembimbing...">
+                  </div>
+                </div>
+              </div>
+              <div class="card-body">
+                <div style="overflow-x: auto;">
+                  <table id="guruPembimbingTable" class="table table-bordered table-striped" style="min-width:800px;">
+                    <thead>
+                      <tr>
+                        <th>No</th>
+                        <th>NIP</th>
+                        <th>Nama Lengkap</th>
+                        <th>Username</th>
+                        <th>Password</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <footer class="main-footer">
+    <strong>Copyright &copy; 2025 <a href="#">SMKN 1 Kawunganten</a>.</strong>
+    All rights reserved.
+    <div class="float-right d-none d-sm-inline-block">
+      <b>By</b> Wendra Bagas Saputra
+    </div>
+  </footer>
+</div>
+<!-- ./wrapper -->
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<!-- Bootstrap 4 -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- DataTables -->
+<script src="plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+<!-- AdminLTE App -->
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<!-- SheetJS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+<!-- Modal Siswa Bimbingan -->
+<div class="modal fade" id="modalSiswaBimbingan" tabindex="-1" role="dialog" aria-labelledby="modalSiswaBimbinganLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalSiswaBimbinganLabel">Daftar Siswa Bimbingan</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="modalSiswaBimbinganContent">
+          <div class="text-center"><i class="fas fa-spinner fa-spin"></i> Memuat...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDW5b9av9cBHh5AqEnxicBMIP0me-Goy_I",
+  authDomain: "epkl-c628b.firebaseapp.com",
+  projectId: "epkl-c628b",
+  storageBucket: "epkl-c628b.firebasestorage.app",
+  messagingSenderId: "41559318468",
+  appId: "1:41559318468:web:3711f4da0f7087d683ce91",
+  measurementId: "G-ZFWBRF40KQ"
+};
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+// Load data
+function loadData(filterNama = '') {
+  const tableBody = document.getElementById('tableBody');
+  tableBody.innerHTML = '';
+  let no = 1;
+  db.collection("guru_pembimbing").get().then((querySnapshot) => {
+    let dataArr = [];
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      dataArr.push({id: doc.id, ...data});
+    });
+    if (filterNama) {
+      dataArr = dataArr.filter(d => (d.namaLengkap || '').toLowerCase().includes(filterNama.toLowerCase()));
+    }
+    dataArr.forEach((data, idx) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${no++}</td>
+        <td>${data.nip || '-'}</td>
+        <td>${data.namaLengkap || '-'}</td>
+        <td>${data.username || '-'}</td>
+        <td>${data.password || '-'}</td>
+        <td>
+          <button class="btn btn-info btn-sm" onclick="lihatSiswaBimbingan('${data.id}', '${data.namaLengkap}')">
+            <i class="fas fa-eye"></i> Lihat Siswa
+          </button>
+          <button class="btn btn-warning btn-sm" onclick="editData('${data.id}')">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="deleteData('${data.id}')">
+            <i class="fas fa-trash"></i>
+          </button>
+        </td>
+      `;
+      tableBody.appendChild(row);
+    });
+    // Initialize DataTable
+    if ($.fn.DataTable.isDataTable('#guruPembimbingTable')) {
+      $('#guruPembimbingTable').DataTable().destroy();
+    }
+    $('#guruPembimbingTable').DataTable({
+      "responsive": false,
+      "autoWidth": false,
+      "scrollX": true,
+      "pageLength": 25,
+      "order": [],
+      "columnDefs": [
+        { "orderable": false, "targets": -1 } // kolom Action tidak bisa sort
+      ]
+    });
+  });
+}
+// Load data when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  loadData();
+  document.getElementById('filterNama').addEventListener('input', function() {
+    loadData(this.value);
+  });
+});
+// Edit data function (pastikan ke edit_guru_pembimbing.html)
+function editData(id) {
+  db.collection("guru_pembimbing").doc(id).get().then((doc) => {
+    if (doc.exists) {
+      const data = doc.data();
+      const params = new URLSearchParams({
+        id: id,
+        nip: data.nip || '',
+        namaLengkap: data.namaLengkap || '',
+        username: data.username || '',
+        password: data.password || ''
+      });
+      window.location.href = `edit_guru_pembimbing.html?${params.toString()}`;
+    }
+  });
+}
+// Delete data function
+function deleteData(id) {
+  if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
+    db.collection("guru_pembimbing").doc(id).delete()
+      .then(() => {
+        alert('Data berhasil dihapus!');
+        loadData();
+      })
+      .catch((error) => {
+        alert('Error: ' + error);
+      });
+  }
+}
+// Lihat siswa bimbingan function (ubah jadi modal)
+function lihatSiswaBimbingan(guruId, namaGuru) {
+  $('#modalSiswaBimbinganLabel').text('Daftar Siswa Bimbingan: ' + namaGuru);
+  $('#modalSiswaBimbinganContent').html('<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Memuat...</div>');
+  $('#modalSiswaBimbingan').modal('show');
+  db.collection('siswa').where('namaGuruPembimbing', '==', namaGuru).get().then((querySnapshot) => {
+    let html = '<div style="overflow-x:auto;"><table class="table table-bordered table-striped"><thead><tr><th>NIS</th><th>Nama Siswa</th><th>Kelas</th></tr></thead><tbody>';
+    if (querySnapshot.empty) {
+      html += '<tr><td colspan="3" class="text-center">Tidak ada siswa bimbingan.</td></tr>';
+    } else {
+      querySnapshot.forEach((doc) => {
+        const s = doc.data();
+        html += `<tr><td>${s.nis || ''}</td><td>${s.namaLengkap || ''}</td><td>${s.kelas || ''}</td></tr>`;
+      });
+    }
+    html += '</tbody></table></div>';
+    $('#modalSiswaBimbinganContent').html(html);
+  });
+}
+// Export Excel
+document.getElementById('exportExcel').addEventListener('click', function() {
+  db.collection("guru_pembimbing").get().then((querySnapshot) => {
+    const data = [];
+    let no = 1;
+    querySnapshot.forEach((doc) => {
+      const d = doc.data();
+      data.push({
+        No: no++,
+        NIP: d.nip || '',
+        Nama_Lengkap: d.namaLengkap || '',
+        Username: d.username || '',
+        Password: d.password || ''
+      });
+    });
+    /* global XLSX */
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Guru_Pembimbing");
+    XLSX.writeFile(wb, "data_guru_pembimbing.xlsx");
+  });
+});
+// Download Template
+document.getElementById('downloadTemplate').addEventListener('click', function() {
+  const templateData = [
+    { NIP: '123456789', Nama_Lengkap: 'Nama Guru', Username: 'username', Password: 'password' }
+  ];
+  const ws = XLSX.utils.json_to_sheet(templateData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Template");
+  XLSX.writeFile(wb, "template_guru_pembimbing.xlsx");
+});
+// Refresh Data
+document.getElementById('refreshData').addEventListener('click', function() {
+  loadData();
+});
+// Logout function
+function logout() {
+  localStorage.removeItem('hasLoggedIn');
+  window.location.href = 'login.html';
+}
+</script>
+</body>
+</html> 

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Import Data Excel Siswa</title>
+
+  <!-- Google Font: Source Sans Pro -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="plugins/bootstrap/css/bootstrap.min.css">
+  <!-- Theme style -->
+  <link rel="stylesheet" href="dist/css/adminlte.min.css">
+</head>
+<body class="hold-transition sidebar-mini">
+<div class="wrapper">
+
+  <!-- Navbar -->
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <!-- Left navbar links -->
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+      </li>
+    </ul>
+  </nav>
+  <!-- /.navbar -->
+
+  <!-- Main Sidebar Container -->
+  <aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <!-- Brand Logo -->
+    <a href="index3.html" class="brand-link">
+      <img src="dist/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
+      <span class="brand-text font-weight-light">AdminLTE 3</span>
+    </a>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- Sidebar Menu -->
+      <nav class="mt-2">
+        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+          <li class="nav-item">
+            <a href="perusahaan.html" class="nav-link">
+              <i class="nav-icon fas fa-building"></i>
+              <p>Data Perusahaan</p>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      <!-- /.sidebar-menu -->
+    </div>
+    <!-- /.sidebar -->
+  </aside>
+
+  <!-- Content Wrapper -->
+  <div class="content-wrapper">
+    <!-- Content Header -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Import Data Excel Siswa</h1>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-body">
+                <form id="importForm">
+                  <div class="form-group">
+                    <label>File Excel</label>
+                    <input type="file" class="form-control" id="excelFile" accept=".xlsx, .xls" required>
+                  </div>
+                  <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Import</button>
+                    <a href="data_siswa.html" class="btn btn-default">Kembali</a>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- jQuery -->
+<script src="plugins/jquery/jquery.min.js"></script>
+<!-- Bootstrap 4 -->
+<script src="plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<!-- AdminLTE App -->
+<script src="dist/js/adminlte.min.js"></script>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<!-- SheetJS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+
+<script>
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDW5b9av9cBHh5AqEnxicBMIP0me-Goy_I",
+  authDomain: "epkl-c628b.firebaseapp.com",
+  projectId: "epkl-c628b",
+  storageBucket: "epkl-c628b.firebasestorage.app",
+  messagingSenderId: "41559318468",
+  appId: "1:41559318468:web:3711f4da0f7087d683ce91",
+  measurementId: "G-ZFWBRF40KQ"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// Helper: generate presensi string "A,A,A,..."
+function generatePresensiString(jumlahHari) {
+  return Array(jumlahHari).fill('A').join(',');
+}
+
+// Jumlah hari tiap bulan
+const presensiDefaults = {
+  presensi_juli: generatePresensiString(31),
+  presensi_agustus: generatePresensiString(31),
+  presensi_september: generatePresensiString(30),
+  presensi_oktober: generatePresensiString(31),
+  presensi_november: generatePresensiString(30)
+};
+
+// Handle form submission
+document.getElementById('importForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const file = document.getElementById('excelFile').files[0];
+  const reader = new FileReader();
+  
+  reader.onload = function(e) {
+    const data = new Uint8Array(e.target.result);
+    const workbook = XLSX.read(data, {type: 'array'});
+    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+    
+    // Get range of data (skip first row)
+    const range = XLSX.utils.decode_range(firstSheet['!ref']);
+    range.s.r = 1; // Start from second row
+    firstSheet['!ref'] = XLSX.utils.encode_range(range);
+    
+    const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: ['nis', 'namaLengkap', 'kelas', 'namaPerusahaan', 'namaGuruPembimbing', 'namaPembimbingIndustri', 'password', 'nilai1', 'nilai2', 'nilai3', 'nilai4', 'hadir', 'ijin', 'sakit', 'alfa']});
+    
+    // Import data to Firebase
+    const batchOps = [];
+    jsonData.forEach(row => {
+      if (!row.nis) return;
+      batchOps.push(
+        db.collection("siswa").where("nis", "==", row.nis).get().then((querySnapshot) => {
+          const siswaData = {
+            nis: row.nis || '',
+            namaLengkap: row.namaLengkap || '',
+            kelas: row.kelas || '',
+            namaPerusahaan: row.namaPerusahaan || '',
+            namaGuruPembimbing: row.namaGuruPembimbing || '',
+            namaPembimbingIndustri: row.namaPembimbingIndustri || '',
+            password: row.password || '',
+            nilai1: row.nilai1 || '',
+            nilai2: row.nilai2 || '',
+            nilai3: row.nilai3 || '',
+            nilai4: row.nilai4 || '',
+            hadir: row.hadir || '',
+            ijin: row.ijin || '',
+            sakit: row.sakit || '',
+            alfa: row.alfa || '',
+            presensi_juli: presensiDefaults.presensi_juli,
+            presensi_agustus: presensiDefaults.presensi_agustus,
+            presensi_september: presensiDefaults.presensi_september,
+            presensi_oktober: presensiDefaults.presensi_oktober,
+            presensi_november: presensiDefaults.presensi_november
+          };
+          if (!querySnapshot.empty) {
+            // Update jika NIS sudah ada
+            const docId = querySnapshot.docs[0].id;
+            return db.collection("siswa").doc(docId).set(siswaData);
+          } else {
+            // Tambah baru
+            return db.collection("siswa").add(siswaData);
+          }
+        })
+      );
+    });
+    Promise.all(batchOps)
+      .then(() => {
+        alert('Data berhasil diimport!');
+        window.location.href = 'data_siswa.html';
+      })
+      .catch((error) => {
+        alert('Error: ' + error);
+      });
+  };
+  
+  reader.readAsArrayBuffer(file);
+});
+</script>
+
+</body>
+</html> 

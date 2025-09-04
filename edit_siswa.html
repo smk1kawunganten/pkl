@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Edit Data Siswa</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
+  <link rel="stylesheet" href="plugins/bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="dist/css/adminlte.min.css">
+</head>
+<body class="hold-transition">
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-body">
+          <h1 class="mb-4">Edit Data Siswa</h1>
+          <form id="editForm">
+            <input type="hidden" id="editId">
+            <div class="form-group">
+              <label>NIS</label>
+              <input type="text" class="form-control" id="nis" required>
+            </div>
+            <div class="form-group">
+              <label>Nama Lengkap</label>
+              <input type="text" class="form-control" id="namaLengkap" required>
+            </div>
+            <div class="form-group">
+              <label>Kelas</label>
+              <input list="kelasList" class="form-control" id="kelas" required>
+              <datalist id="kelasList">
+                <option value="XII TKR A">
+                <option value="XII TKR B">
+                <option value="XII TKR C">
+                <option value="XII TSM A">
+                <option value="XII TSM B">
+                <option value="XII TSM C">
+                <option value="XII TSM KJ">
+                <option value="XII DKV A">
+                <option value="XII DKV B">
+                <option value="XII DKV C">
+                <option value="XII DKV D">
+                <option value="XII AN A">
+                <option value="XII AN B">
+              </datalist>
+            </div>
+            <div class="form-group">
+              <label>Nama Perusahaan</label>
+              <input list="perusahaanList" class="form-control" id="namaPerusahaan" required>
+              <datalist id="perusahaanList"></datalist>
+            </div>
+            <div class="form-group">
+              <label>Nama Guru Pembimbing</label>
+              <input list="guruList" class="form-control" id="namaGuruPembimbing" required>
+              <datalist id="guruList"></datalist>
+            </div>
+            <div class="form-group">
+              <label>Nama Pembimbing Industri</label>
+              <input type="text" class="form-control" id="namaPembimbingIndustri" >
+            </div>
+            <div class="form-group">
+              <label>Password</label>
+              <input type="text" class="form-control" id="password" required>
+            </div>
+            <div class="form-group">
+              <button type="submit" class="btn btn-primary mr-2" style="margin-right: 10px;">Update</button>
+              <a href="data_siswa.html" class="btn btn-default mr-2" style="margin-right: 10px;">Kembali</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="plugins/jquery/jquery.min.js"></script>
+<script src="plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="dist/js/adminlte.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDW5b9av9cBHh5AqEnxicBMIP0me-Goy_I",
+  authDomain: "epkl-c628b.firebaseapp.com",
+  projectId: "epkl-c628b",
+  storageBucket: "epkl-c628b.firebasestorage.app",
+  messagingSenderId: "41559318468",
+  appId: "1:41559318468:web:3711f4da0f7087d683ce91",
+  measurementId: "G-ZFWBRF40KQ"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+// Get URL parameters
+const urlParams = new URLSearchParams(window.location.search);
+const id = urlParams.get('id');
+// Load data into form
+function loadPerusahaanOptions(selected) {
+  db.collection('perusahaan').get().then((querySnapshot) => {
+    const perusahaanList = document.getElementById('perusahaanList');
+    perusahaanList.innerHTML = '';
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      if (data.namaPerusahaan) {
+        const option = document.createElement('option');
+        option.value = data.namaPerusahaan;
+        perusahaanList.appendChild(option);
+      }
+    });
+    if (selected) document.getElementById('namaPerusahaan').value = selected;
+  });
+}
+function loadGuruPembimbingOptions(selected) {
+  db.collection('guru_pembimbing').get().then((querySnapshot) => {
+    const guruList = document.getElementById('guruList');
+    guruList.innerHTML = '';
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      if (data.namaLengkap) {
+        const option = document.createElement('option');
+        option.value = data.namaLengkap;
+        guruList.appendChild(option);
+      }
+    });
+    if (selected) document.getElementById('namaGuruPembimbing').value = selected;
+  });
+}
+document.addEventListener('DOMContentLoaded', function() {
+  if (id) {
+    document.getElementById('editId').value = id;
+    document.getElementById('nis').value = urlParams.get('nis') || '';
+    document.getElementById('namaLengkap').value = urlParams.get('namaLengkap') || '';
+    document.getElementById('kelas').value = urlParams.get('kelas') || '';
+    loadPerusahaanOptions(urlParams.get('namaPerusahaan') || '');
+    loadGuruPembimbingOptions(urlParams.get('namaGuruPembimbing') || '');
+    document.getElementById('namaPembimbingIndustri').value = urlParams.get('namaPembimbingIndustri') || '';
+    document.getElementById('password').value = urlParams.get('password') || '';
+  } else {
+    loadPerusahaanOptions('');
+    loadGuruPembimbingOptions('');
+  }
+});
+document.getElementById('editForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const data = {
+    nis: document.getElementById('nis').value,
+    namaLengkap: document.getElementById('namaLengkap').value,
+    kelas: document.getElementById('kelas').value,
+    namaPerusahaan: document.getElementById('namaPerusahaan').value,
+    namaGuruPembimbing: document.getElementById('namaGuruPembimbing').value,
+    namaPembimbingIndustri: document.getElementById('namaPembimbingIndustri').value,
+    password: document.getElementById('password').value
+  };
+  db.collection("siswa").doc(id).update(data)
+    .then(() => {
+      alert('Data berhasil diupdate!');
+      window.location.href = 'data_siswa.html';
+    })
+    .catch((error) => {
+      alert('Error: ' + error);
+    });
+});
+</script>
+</body>
+</html> 

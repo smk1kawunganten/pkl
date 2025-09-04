@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Data Perusahaan</title>
+
+  <!-- Google Font: Source Sans Pro -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="plugins/bootstrap/css/bootstrap.min.css">
+  <!-- Theme style -->
+  <link rel="stylesheet" href="dist/css/adminlte.min.css">
+  <!-- DataTables -->
+  <link rel="stylesheet" href="plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+  <link rel="stylesheet" href="plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+  <link rel="stylesheet" href="plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
+</head>
+<body class="hold-transition sidebar-mini">
+<div class="wrapper">
+
+  <!-- Navbar -->
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <!-- Left navbar links -->
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+      </li>
+    </ul>
+  </nav>
+  <!-- /.navbar -->
+
+  <!-- Main Sidebar Container -->
+  <aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <!-- Brand Logo -->
+    <a href="index3.html" class="brand-link">
+      <img src="dist/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
+      <span class="brand-text font-weight-light">AdminLTE 3</span>
+    </a>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- Sidebar Menu -->
+      <nav class="mt-2">
+        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+          <li class="nav-item">
+            <a href="perusahaan.html" class="nav-link active">
+              <i class="nav-icon fas fa-building"></i>
+              <p>Data Perusahaan</p>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      <!-- /.sidebar-menu -->
+    </div>
+    <!-- /.sidebar -->
+  </aside>
+
+  <!-- Content Wrapper -->
+  <div class="content-wrapper">
+    <!-- Content Header -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Data Perusahaan</h1>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header">
+                <div class="row">
+                  <div class="col-md-8">
+                    <a href="tambah_perusahaan.html" class="btn btn-primary">
+                      <i class="fas fa-plus"></i> Tambah Data
+                    </a>
+                    <a href="import_excel.html" class="btn btn-success">
+                      <i class="fas fa-file-excel"></i> Import Excel
+                    </a>
+                    <button type="button" class="btn btn-info" id="downloadTemplate">
+                      <i class="fas fa-download"></i> Template Excel
+                    </button>
+                    <button type="button" class="btn btn-warning" id="exportExcel">
+                      <i class="fas fa-file-export"></i> Export Excel
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="refreshData">
+                      <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <!-- /.card-header -->
+              <div class="card-body">
+                <table id="example1" class="table table-bordered table-striped">
+                  <thead>
+                    <tr>
+                      <th>Nama Perusahaan</th>
+                      <th>Lokasi GPS</th>
+                      <th>Alamat</th>
+                      <th>Nama Pemimpin</th>
+                      <th>NIP</th>
+                      <th>Hardskill 1</th>
+                      <th>Hardskill 2</th>
+                      <th>Hardskill 3</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tableBody">
+                  </tbody>
+                </table>
+              </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+          <!-- /.col -->
+        </div>
+        <!-- /.row -->
+      </div>
+      <!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+  </div>
+  <!-- /.content-wrapper -->
+
+  <!-- Add Modal -->
+  <div class="modal fade" id="modal-add">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">Tambah Data Perusahaan</h4>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form id="addForm">
+            <div class="form-group">
+              <label>Nama Perusahaan</label>
+              <input type="text" class="form-control" id="namaPerusahaan" required>
+            </div>
+            <div class="form-group">
+              <label>Lokasi GPS</label>
+              <input type="text" class="form-control" id="lokasiGPS" required>
+            </div>
+            <div class="form-group">
+              <label>Alamat</label>
+              <textarea class="form-control" id="alamat" required></textarea>
+            </div>
+            <div class="form-group">
+              <label>Nama Pemimpin</label>
+              <input type="text" class="form-control" id="namaPemimpin" required>
+            </div>
+            <div class="form-group">
+              <label>NIP</label>
+              <input type="text" class="form-control" id="nip">
+            </div>
+            <div class="form-group">
+              <label>Hardskill 1</label>
+              <input type="text" class="form-control" id="hardskill1" required>
+            </div>
+            <div class="form-group">
+              <label>Hardskill 2</label>
+              <input type="text" class="form-control" id="hardskill2" required>
+            </div>
+            <div class="form-group">
+              <label>Hardskill 3</label>
+              <input type="text" class="form-control" id="hardskill3" required>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer justify-content-between">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="saveData">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="modal fade" id="modal-edit">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">Edit Data Perusahaan</h4>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form id="editForm">
+            <input type="hidden" id="editId">
+            <div class="form-group">
+              <label>Nama Perusahaan</label>
+              <input type="text" class="form-control" id="editNamaPerusahaan" required>
+            </div>
+            <div class="form-group">
+              <label>Lokasi GPS</label>
+              <input type="text" class="form-control" id="editLokasiGPS" required>
+            </div>
+            <div class="form-group">
+              <label>Alamat</label>
+              <textarea class="form-control" id="editAlamat" required></textarea>
+            </div>
+            <div class="form-group">
+              <label>Nama Pemimpin</label>
+              <input type="text" class="form-control" id="editNamaPemimpin" required>
+            </div>
+            <div class="form-group">
+              <label>NIP</label>
+              <input type="text" class="form-control" id="editNip">
+            </div>
+            <div class="form-group">
+              <label>Hardskill 1</label>
+              <input type="text" class="form-control" id="editHardskill1" required>
+            </div>
+            <div class="form-group">
+              <label>Hardskill 2</label>
+              <input type="text" class="form-control" id="editHardskill2" required>
+            </div>
+            <div class="form-group">
+              <label>Hardskill 3</label>
+              <input type="text" class="form-control" id="editHardskill3" required>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer justify-content-between">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="updateData">Update</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<!-- ./wrapper -->
+
+<!-- jQuery -->
+<script src="plugins/jquery/jquery.min.js"></script>
+<!-- jQuery UI -->
+<script src="plugins/jquery-ui/jquery-ui.min.js"></script>
+<!-- Bootstrap 4 -->
+<script src="plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<!-- DataTables  & Plugins -->
+<script src="plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+<script src="plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+<script src="plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+<!-- AdminLTE App -->
+<script src="dist/js/adminlte.min.js"></script>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<!-- SheetJS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+// Firebase configuration
+const firebaseConfig = {
+    piKey: "AIzaSyDW5b9av9cBHh5AqEnxicBMIP0me-Goy_I",
+  authDomain: "epkl-c628b.firebaseapp.com",
+  projectId: "epkl-c628b",
+  storageBucket: "epkl-c628b.firebasestorage.app",
+  messagingSenderId: "41559318468",
+  appId: "1:41559318468:web:3711f4da0f7087d683ce91",
+  measurementId: "G-ZFWBRF40KQ"
+}
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// Initialize DataTable
+$(document).ready(function() {
+  console.log('Document ready, initializing...');
+  
+  // Initialize DataTable
+  $('#example1').DataTable({
+    responsive: true,
+    pageLength: 25,
+    language: {
+      url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Indonesian.json'
+    }
+  });
+  
+  // Load data immediately
+  loadData();
+  
+  // Add refresh button functionality
+  $('#refreshData').on('click', function() {
+    loadData();
+  });
+
+  // Debug modal trigger
+  $('.btn-primary[data-toggle="modal"]').on('click', function(e) {
+    console.log('Add button clicked');
+    e.preventDefault();
+    try {
+      $('#modal-add').modal({
+        backdrop: 'static',
+        keyboard: false
+      });
+      $('#modal-add').modal('show');
+      console.log('Modal should be visible now');
+    } catch (error) {
+      console.error('Error showing modal:', error);
+    }
+  });
+
+  // Debug modal events
+  $('#modal-add').on('show.bs.modal', function () {
+    console.log('Modal show event triggered');
+  });
+
+  $('#modal-add').on('shown.bs.modal', function () {
+    console.log('Modal shown event triggered');
+  });
+
+  $('#modal-add').on('hide.bs.modal', function () {
+    console.log('Modal hide event triggered');
+  });
+
+  $('#modal-add').on('hidden.bs.modal', function () {
+    console.log('Modal hidden event triggered');
+  });
+});
+
+// Load data from Firestore
+function loadData() {
+  console.log('Loading data from Firebase...');
+  
+  // Clear existing table
+  let tableBody = document.getElementById('tableBody');
+  tableBody.innerHTML = '<tr><td colspan="9" class="text-center">Memuat data...</td></tr>';
+  
+  // Get all documents from perusahaan collection
+  db.collection("perusahaan").orderBy("namaPerusahaan").get()
+    .then((querySnapshot) => {
+      console.log('Data received from Firebase:', querySnapshot.size, 'documents');
+      tableBody.innerHTML = '';
+      
+      if (querySnapshot.empty) {
+        console.log('No data found in Firebase');
+        tableBody.innerHTML = '<tr><td colspan="9" class="text-center">Tidak ada data</td></tr>';
+        return;
+      }
+      
+      // Process each document
+      querySnapshot.forEach((doc) => {
+        console.log('Processing document:', doc.id);
+        let data = doc.data();
+        
+        // Create table row
+        let row = `
+          <tr>
+            <td>${data.namaPerusahaan || '-'}</td>
+            <td>${data.lokasiGPS || '-'}</td>
+            <td>${data.alamat || '-'}</td>
+            <td>${data.namaPemimpin || '-'}</td>
+            <td>${data.nip || '-'}</td>
+            <td>${data.hardskill1 || '-'}</td>
+            <td>${data.hardskill2 || '-'}</td>
+            <td>${data.hardskill3 || '-'}</td>
+            <td>
+              <button class="btn btn-warning btn-sm" onclick="editData('${doc.id}')">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="btn btn-danger btn-sm" onclick="deleteData('${doc.id}')">
+                <i class="fas fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+        tableBody.innerHTML += row;
+      });
+      
+      // Reinitialize DataTable
+      if ($.fn.DataTable.isDataTable('#example1')) {
+        $('#example1').DataTable().destroy();
+      }
+      
+      $('#example1').DataTable({
+        responsive: true,
+        language: {
+          url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Indonesian.json'
+        },
+        order: [[0, 'asc']], // Sort by company name
+        pageLength: 25,
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Semua"]]
+      });
+      
+      console.log('Data loaded successfully');
+    })
+    .catch((error) => {
+      console.error('Error loading data:', error);
+      tableBody.innerHTML = '<tr><td colspan="9" class="text-center text-danger">Error: ' + error.message + '</td></tr>';
+    });
+}
+
+// Save new data
+document.getElementById('saveData').addEventListener('click', function() {
+  let data = {
+    namaPerusahaan: document.getElementById('namaPerusahaan').value,
+    lokasiGPS: document.getElementById('lokasiGPS').value,
+    alamat: document.getElementById('alamat').value,
+    namaPemimpin: document.getElementById('namaPemimpin').value,
+    nip: document.getElementById('nip').value,
+    hardskill1: document.getElementById('hardskill1').value,
+    hardskill2: document.getElementById('hardskill2').value,
+    hardskill3: document.getElementById('hardskill3').value
+  };
+
+  db.collection("perusahaan").add(data)
+    .then(() => {
+      $('#modal-add').modal('hide');
+      document.getElementById('addForm').reset();
+      loadData();
+    });
+});
+
+// Edit data
+function editData(id) {
+  db.collection("perusahaan").doc(id).get().then((doc) => {
+    if (doc.exists) {
+      let data = doc.data();
+      document.getElementById('editId').value = id;
+      document.getElementById('editNamaPerusahaan').value = data.namaPerusahaan;
+      document.getElementById('editLokasiGPS').value = data.lokasiGPS;
+      document.getElementById('editAlamat').value = data.alamat;
+      document.getElementById('editNamaPemimpin').value = data.namaPemimpin;
+      document.getElementById('editNip').value = data.nip;
+      document.getElementById('editHardskill1').value = data.hardskill1;
+      document.getElementById('editHardskill2').value = data.hardskill2;
+      document.getElementById('editHardskill3').value = data.hardskill3;
+      $('#modal-edit').modal('show');
+    }
+  });
+}
+
+// Update data
+document.getElementById('updateData').addEventListener('click', function() {
+  let id = document.getElementById('editId').value;
+  let data = {
+    namaPerusahaan: document.getElementById('editNamaPerusahaan').value,
+    lokasiGPS: document.getElementById('editLokasiGPS').value,
+    alamat: document.getElementById('editAlamat').value,
+    namaPemimpin: document.getElementById('editNamaPemimpin').value,
+    nip: document.getElementById('editNip').value,
+    hardskill1: document.getElementById('editHardskill1').value,
+    hardskill2: document.getElementById('editHardskill2').value,
+    hardskill3: document.getElementById('editHardskill3').value
+  };
+
+  db.collection("perusahaan").doc(id).update(data)
+    .then(() => {
+      $('#modal-edit').modal('hide');
+      loadData();
+    });
+});
+
+// Delete data
+function deleteData(id) {
+  if(confirm('Are you sure you want to delete this data?')) {
+    db.collection("perusahaan").doc(id).delete()
+      .then(() => {
+        loadData();
+      });
+  }
+}
+
+// Export to Excel
+document.getElementById('exportExcel').addEventListener('click', function() {
+  try {
+    // Get all data from the table
+    const table = document.getElementById('example1');
+    const rows = Array.from(table.querySelectorAll('tbody tr'));
+    
+    // Convert table data to array of objects
+    const data = rows.map(row => {
+      const cells = row.querySelectorAll('td');
+      return {
+        namaPerusahaan: cells[0].textContent,
+        lokasiGPS: cells[1].textContent,
+        alamat: cells[2].textContent,
+        namaPemimpin: cells[3].textContent,
+        nip: cells[4].textContent,
+        hardskill1: cells[5].textContent,
+        hardskill2: cells[6].textContent,
+        hardskill3: cells[7].textContent
+      };
+    });
+
+    // Create worksheet
+    const ws = XLSX.utils.json_to_sheet(data);
+    
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Data Perusahaan");
+
+    // Convert to binary string
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+
+    // Convert to blob
+    const blob = new Blob([s2ab(wbout)], { type: 'application/octet-stream' });
+
+    // Create download link
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'Data_Perusahaan.xlsx';
+    
+    // Trigger download
+    document.body.appendChild(link);
+    link.click();
+    
+    // Cleanup
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Error exporting to Excel:', error);
+    alert('Terjadi kesalahan saat mengekspor data. Silakan coba lagi.');
+  }
+});
+
+// Download Template
+document.getElementById('downloadTemplate').addEventListener('click', function() {
+  try {
+    // Create template data
+    const template = [{
+      namaPerusahaan: '',
+      lokasiGPS: '',
+      alamat: '',
+      namaPemimpin: '',
+      nip: '',
+      hardskill1: '',
+      hardskill2: '',
+      hardskill3: ''
+    }];
+
+    // Create worksheet
+    const ws = XLSX.utils.json_to_sheet(template);
+    
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Template");
+
+    // Convert to binary string
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+
+    // Convert to blob
+    const blob = new Blob([s2ab(wbout)], { type: 'application/octet-stream' });
+
+    // Create download link
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'Template_Data_Perusahaan.xlsx';
+    
+    // Trigger download
+    document.body.appendChild(link);
+    link.click();
+    
+    // Cleanup
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Error downloading template:', error);
+    alert('Terjadi kesalahan saat mengunduh template. Silakan coba lagi.');
+  }
+});
+
+// Helper function to convert string to ArrayBuffer
+function s2ab(s) {
+  const buf = new ArrayBuffer(s.length);
+  const view = new Uint8Array(buf);
+  for (let i = 0; i < s.length; i++) {
+    view[i] = s.charCodeAt(i) & 0xFF;
+  }
+  return buf;
+}
+</script>
+
+</body>
+</html>

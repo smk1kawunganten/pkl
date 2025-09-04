@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tambah Data Siswa</title>
+
+  <!-- Google Font: Source Sans Pro -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="plugins/bootstrap/css/bootstrap.min.css">
+  <!-- Theme style -->
+  <link rel="stylesheet" href="dist/css/adminlte.min.css">
+</head>
+<body class="hold-transition sidebar-mini">
+<div class="wrapper">
+
+  <!-- Navbar -->
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <!-- Left navbar links -->
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="index.html">Home</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="data_siswa.html">Data Siswa</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="guru_pembimbing.html">Data Pembimbing</a>
+      </li>
+    </ul>
+  </nav>
+  <!-- /.navbar -->
+
+  <!-- Main Sidebar Container -->
+  <aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <!-- Brand Logo -->
+    <a href="index.html" class="brand-link">
+      <img src="dist/img/AdminLTELogo.png" alt="ePKL Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
+      <span class="brand-text font-weight-light">ePKL v2</span>
+    </a>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- Sidebar Menu -->
+      <nav class="mt-2">
+        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
+          <li class="nav-item">
+            <a href="index.html" class="nav-link">
+              <i class="nav-icon fas fa-tachometer-alt"></i>
+              <p>Dashboard</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="data_siswa.html" class="nav-link">
+              <i class="nav-icon fas fa-users"></i>
+              <p>Data Siswa</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="perusahaan.html" class="nav-link">
+              <i class="nav-icon fas fa-building"></i>
+              <p>Data Tempat PKL</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link">
+              <i class="nav-icon fas fa-calendar-check"></i>
+              <p>Data Presensi</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="guru_pembimbing.html" class="nav-link">
+              <i class="nav-icon fas fa-chalkboard-teacher"></i>
+              <p>Data Guru Pembimbing</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link">
+              <i class="nav-icon fas fa-folder"></i>
+              <p>Data Other 1</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link">
+              <i class="nav-icon fas fa-folder-open"></i>
+              <p>Data Other 2</p>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      <!-- /.sidebar-menu -->
+    </div>
+    <!-- /.sidebar -->
+  </aside>
+
+  <!-- Content Wrapper -->
+  <div class="content-wrapper">
+    <!-- Content Header -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Tambah Data Siswa</h1>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-body">
+                <form id="addForm">
+                  <div class="form-group">
+                    <label>NIS</label>
+                    <input type="text" class="form-control" id="nis" required>
+                  </div>
+                  <div class="form-group">
+                    <label>Nama Lengkap</label>
+                    <input type="text" class="form-control" id="namaLengkap" required>
+                  </div>
+                  <div class="form-group">
+                    <label>Kelas</label>
+                    <select class="form-control" id="kelas" required>
+                      <option value="">Pilih Kelas</option>
+                      <option value="XII TKR A">XII TKR A</option>
+                      <option value="XII TKR B">XII TKR B</option>
+                      <option value="XII TKR C">XII TKR C</option>
+                      <option value="XII TSM A">XII TSM A</option>
+                      <option value="XII TSM B">XII TSM B</option>
+                      <option value="XII TSM C">XII TSM C</option>
+                      <option value="XII TSM KJ">XII TSM KJ</option>
+                      <option value="XII DKV A">XII DKV A</option>
+                      <option value="XII DKV B">XII DKV B</option>
+                      <option value="XII DKV C">XII DKV C</option>
+                      <option value="XII DKV D">XII DKV D</option>
+                      <option value="XII AN A">XII AN A</option>
+                      <option value="XII AN B">XII AN B</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Nama Perusahaan</label>
+                    <select class="form-control" id="namaPerusahaan" required>
+                      <option value="">Pilih Perusahaan</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Nama Guru Pembimbing</label>
+                    <select class="form-control" id="namaGuruPembimbing" required>
+                      <option value="">Pilih Guru Pembimbing</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Nama Pembimbing Industri</label>
+                    <input type="text" class="form-control" id="namaPembimbingIndustri" required>
+                  </div>
+                  <div class="form-group">
+                    <label>Password</label>
+                    <input type="text" class="form-control" id="password" required>
+                  </div>
+                  <div class="form-group">
+                    <label>Nilai 1</label>
+                    <input type="number" class="form-control" id="nilai1">
+                  </div>
+                  <div class="form-group">
+                    <label>Nilai 2</label>
+                    <input type="number" class="form-control" id="nilai2">
+                  </div>
+                  <div class="form-group">
+                    <label>Nilai 3</label>
+                    <input type="number" class="form-control" id="nilai3">
+                  </div>
+                  <div class="form-group">
+                    <label>Nilai 4</label>
+                    <input type="number" class="form-control" id="nilai4">
+                  </div>
+                  <div class="form-group">
+                    <label>Hadir</label>
+                    <input type="number" class="form-control" id="hadir">
+                  </div>
+                  <div class="form-group">
+                    <label>Ijin</label>
+                    <input type="number" class="form-control" id="ijin">
+                  </div>
+                  <div class="form-group">
+                    <label>Sakit</label>
+                    <input type="number" class="form-control" id="sakit">
+                  </div>
+                  <div class="form-group">
+                    <label>Alfa</label>
+                    <input type="number" class="form-control" id="alfa">
+                  </div>
+                  <div class="form-group">
+                    <button type="submit" class="btn btn-primary mr-2" style="margin-right: 10px;">Simpan</button>
+                    <a href="data_siswa.html" class="btn btn-default mr-2" style="margin-right: 10px;">Kembali</a>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- jQuery -->
+<script src="plugins/jquery/jquery.min.js"></script>
+<!-- Bootstrap 4 -->
+<script src="plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<!-- AdminLTE App -->
+<script src="dist/js/adminlte.min.js"></script>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+<script>
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDW5b9av9cBHh5AqEnxicBMIP0me-Goy_I",
+  authDomain: "epkl-c628b.firebaseapp.com",
+  projectId: "epkl-c628b",
+  storageBucket: "epkl-c628b.firebasestorage.app",
+  messagingSenderId: "41559318468",
+  appId: "1:41559318468:web:3711f4da0f7087d683ce91",
+  measurementId: "G-ZFWBRF40KQ"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// Helper: generate string "A,A,A,...,A" sebanyak n
+function generatePresensiString(n) {
+  return Array(n).fill('A').join(',');
+}
+
+// Jumlah hari tiap bulan (2024, bukan kabisat, Juli-November)
+const presensiDefaults = {
+  presensi_juli: generatePresensiString(31),
+  presensi_agustus: generatePresensiString(31),
+  presensi_september: generatePresensiString(30),
+  presensi_oktober: generatePresensiString(31),
+  presensi_november: generatePresensiString(30)
+};
+
+// Handle form submission
+document.getElementById('addForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  let data = {
+    nis: document.getElementById('nis').value,
+    namaLengkap: document.getElementById('namaLengkap').value,
+    kelas: document.getElementById('kelas').value,
+    namaPerusahaan: document.getElementById('namaPerusahaan').value,
+    namaGuruPembimbing: document.getElementById('namaGuruPembimbing').value,
+    namaPembimbingIndustri: document.getElementById('namaPembimbingIndustri').value,
+    password: document.getElementById('password').value,
+    nilai1: document.getElementById('nilai1').value,
+    nilai2: document.getElementById('nilai2').value,
+    nilai3: document.getElementById('nilai3').value,
+    nilai4: document.getElementById('nilai4').value,
+    hadir: document.getElementById('hadir').value,
+    ijin: document.getElementById('ijin').value,
+    sakit: document.getElementById('sakit').value,
+    alfa: document.getElementById('alfa').value,
+    // Tambahkan presensi default
+    presensi_juli: presensiDefaults.presensi_juli,
+    presensi_agustus: presensiDefaults.presensi_agustus,
+    presensi_september: presensiDefaults.presensi_september,
+    presensi_oktober: presensiDefaults.presensi_oktober,
+    presensi_november: presensiDefaults.presensi_november
+  };
+
+  db.collection("siswa").where("nis", "==", data.nis).get().then((querySnapshot) => {
+    if (!querySnapshot.empty) {
+      // Update data jika NIS sudah ada
+      querySnapshot.forEach((docu) => {
+        db.collection("siswa").doc(docu.id).set(data)
+          .then(() => {
+            alert('Data berhasil diupdate!');
+            window.location.href = 'data_siswa.html';
+          })
+          .catch((error) => {
+            alert('Error: ' + error);
+          });
+      });
+    } else {
+      // Tambah data baru
+      db.collection("siswa").add(data)
+        .then((docRef) => {
+          alert('Data berhasil disimpan!');
+          window.location.href = 'data_siswa.html';
+        })
+        .catch((error) => {
+          alert('Error: ' + error);
+        });
+    }
+  });
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Isi dropdown perusahaan
+  db.collection("perusahaan").get().then((querySnapshot) => {
+    const perusahaanSelect = document.getElementById('namaPerusahaan');
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      if (data.namaPerusahaan) {
+        const option = document.createElement('option');
+        option.value = data.namaPerusahaan;
+        option.textContent = data.namaPerusahaan;
+        perusahaanSelect.appendChild(option);
+      }
+    });
+  });
+  // Isi dropdown guru pembimbing
+  db.collection("guru_pembimbing").get().then((querySnapshot) => {
+    const guruSelect = document.getElementById('namaGuruPembimbing');
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      if (data.namaLengkap) {
+        const option = document.createElement('option');
+        option.value = data.namaLengkap;
+        option.textContent = data.namaLengkap;
+        guruSelect.appendChild(option);
+      }
+    });
+  });
+});
+</script>
+
+</body>
+</html> 
