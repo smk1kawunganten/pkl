@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Edit Data Siswa</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+</head>
+<body class="hold-transition sidebar-mini">
+<div class="wrapper">
+  <div class="content-wrapper" style="margin:20px;">
+    <h2>Edit Data Siswa</h2>
+    <form id="editForm">
+      <div class="form-group">
+        <label>NIS</label>
+        <input type="text" class="form-control" id="nis" readonly>
+      </div>
+      <div class="form-group">
+        <label>Nama Lengkap</label>
+        <input type="text" class="form-control" id="namaLengkap" required>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="text" class="form-control" id="password" required>
+      </div>
+      <div class="form-group">
+        <label>Tempat PKL</label>
+        <select class="form-control" id="namaPerusahaan" required>
+          <option value="">Pilih Perusahaan</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Guru Pembimbing</label>
+        <select class="form-control" id="namaGuruPembimbing" required>
+          <option value="">Pilih Guru Pembimbing</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+      <a href="data_siswa.html" class="btn btn-default">Kembali</a>
+    </form>
+  </div>
+</div>
+<script>
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyDW5b9av9cBHh5AqEnxicBMIP0me-Goy_I",
+    authDomain: "epkl-c628b.firebaseapp.com",
+    projectId: "epkl-c628b",
+    storageBucket: "epkl-c628b.firebasestorage.app",
+    messagingSenderId: "41559318468",
+    appId: "1:41559318468:web:3711f4da0f7087d683ce91",
+    measurementId: "G-ZFWBRF40KQ"
+  };
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+  const db = firebase.firestore();
+
+  // Ambil ID dari query string
+  function getQueryParam(param) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(param);
+  }
+  const siswaId = getQueryParam('id');
+  if (!siswaId) {
+    alert('ID siswa tidak ditemukan!');
+    window.location.href = 'data_siswa.html';
+  }
+
+  // Isi dropdown perusahaan
+  db.collection("perusahaan").get().then((querySnapshot) => {
+    const perusahaanSelect = document.getElementById('namaPerusahaan');
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      if (data.namaPerusahaan) {
+        const option = document.createElement('option');
+        option.value = data.namaPerusahaan;
+        option.textContent = data.namaPerusahaan;
+        perusahaanSelect.appendChild(option);
+      }
+    });
+  });
+  // Isi dropdown guru pembimbing
+  db.collection("guru_pembimbing").get().then((querySnapshot) => {
+    const guruSelect = document.getElementById('namaGuruPembimbing');
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      if (data.namaLengkap) {
+        const option = document.createElement('option');
+        option.value = data.namaLengkap;
+        option.textContent = data.namaLengkap;
+        guruSelect.appendChild(option);
+      }
+    });
+  });
+
+  // Load data siswa
+  db.collection('siswa').doc(siswaId).get().then((doc) => {
+    if (doc.exists) {
+      const data = doc.data();
+      document.getElementById('nis').value = data.nis || '';
+      document.getElementById('namaLengkap').value = data.namaLengkap || '';
+      document.getElementById('password').value = data.password || '';
+      document.getElementById('namaPerusahaan').value = data.namaPerusahaan || '';
+      document.getElementById('namaGuruPembimbing').value = data.namaGuruPembimbing || '';
+    } else {
+      alert('Data siswa tidak ditemukan!');
+      window.location.href = 'data_siswa.html';
+    }
+  });
+
+  // Handle form submit
+  document.getElementById('editForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const updateData = {
+      namaLengkap: document.getElementById('namaLengkap').value,
+      password: document.getElementById('password').value,
+      namaPerusahaan: document.getElementById('namaPerusahaan').value,
+      namaGuruPembimbing: document.getElementById('namaGuruPembimbing').value
+    };
+    db.collection('siswa').doc(siswaId).update(updateData)
+      .then(() => {
+        alert('Data berhasil diupdate!');
+        window.location.href = 'data_siswa.html';
+      })
+      .catch((error) => {
+        alert('Error: ' + error);
+      });
+  });
+</script>
+</body>
+</html> 

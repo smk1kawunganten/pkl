@@ -1,0 +1,485 @@
+<!--
+INTEGRASI ACC GURU/INSTRUKTUR KE GOOGLE SHEETS
+1. Copy script Google Apps Script berikut ke https://script.google.com/ dan deploy sebagai Web Apps (Anyone):
+
+function doPost(e) {
+  try {
+    var sheetId = 'ID_SHEET_ANDA'; // Ganti dengan ID Google Sheet Anda
+    var sheetName = 'Sheet1'; // Ganti dengan nama sheet yang sesuai
+    var params = JSON.parse(e.postData.contents);
+    var nis = params.nis;
+    var tanggal = params.tanggal;
+    var accField = params.accField; // 'ACC Guru' atau 'ACC Instruktur'
+    var accValue = params.accValue; // biasanya '1'
+    var ss = SpreadsheetApp.openById(sheetId);
+    var sheet = ss.getSheetByName(sheetName);
+    var data = sheet.getDataRange().getValues();
+    var header = data[0];
+    var nisCol = header.indexOf('NIS');
+    var tanggalCol = header.indexOf('Tanggal');
+    var accCol = header.indexOf(accField);
+    if (nisCol === -1 || tanggalCol === -1 || accCol === -1) {
+      return ContentService.createTextOutput(JSON.stringify({success: false, error: 'Kolom tidak ditemukan'})).setMimeType(ContentService.MimeType.JSON);
+    }
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][nisCol] == nis && data[i][tanggalCol] == tanggal) {
+        sheet.getRange(i + 1, accCol + 1).setValue(accValue);
+        return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+    return ContentService.createTextOutput(JSON.stringify({success: false, error: 'Data tidak ditemukan'})).setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({success: false, error: err.message})).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+2. Deploy sebagai Web Apps, set access: Anyone, dan copy URL Web Apps.
+3. Ganti 'URL_APPS_SCRIPT_WEB_APPS_ANDA' di file ini dengan URL Web Apps Anda.
+4. Kolom sheet harus sesuai: NIS, Tanggal, ACC Guru, ACC Instruktur.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Jurnal Siswa PKL</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <style>
+    .cell-0 { background: #f44336; color: white; }
+    .cell-1-acc { background: #4caf50; color: white; }
+    .cell-1-belum { background: #ffeb3b; color: #333; }
+    .cell-libur { background: #2196f3; color: white; }
+    .cell-sakit { background: #9c27b0; color: white; }
+    .cell-ijin { background: #ff9800; color: white; }
+  </style>
+</head>
+<body class="hold-transition sidebar-mini layout-fixed">
+<script>
+  if (!localStorage.getItem('pembimbing_logged_in')) {
+    window.location.href = 'login.html';
+  }
+</script>
+<div class="wrapper">
+  <!-- Navbar -->
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+      </li>
+    </ul>
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="#" id="logoutBtn">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+      </li>
+    </ul>
+  </nav>
+  <!-- Sidebar -->
+  <aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <a href="index.html" class="brand-link">
+      <span class="brand-text font-weight-light">ePKL Pembimbing</span>
+    </a>
+    <div class="sidebar">
+      <nav class="mt-2">
+        <ul class="nav nav-pills nav-sidebar flex-column">
+          <li class="nav-item"><a href="index.html" class="nav-link"><i class="nav-icon fas fa-tachometer-alt"></i>Dashboard</a></li>
+          <li class="nav-item"><a href="data_siswa.html" class="nav-link"><i class="nav-icon fas fa-users"></i>Data Siswa</a></li>
+          <li class="nav-item"><a href="presensi_siswa.html" class="nav-link"><i class="nav-icon fas fa-calendar-check"></i>Presensi Siswa</a></li>
+          <li class="nav-item"><a href="jurnal_siswa.html" class="nav-link active"><i class="nav-icon fas fa-book"></i>Jurnal Siswa</a></li>
+        </ul>
+      </nav>
+    </div>
+  </aside>
+  <div class="content-wrapper">
+    <div class="content-header">
+      <div class="container-fluid">
+        <h2>Jurnal Siswa PKL</h2>
+        <div class="form-inline mb-3">
+          <label for="bulanSelect" class="mr-2">Pilih Bulan:</label>
+          <select id="bulanSelect" class="form-control mr-2">
+            <option value="07">Juli</option>
+            <option value="08">Agustus</option>
+            <option value="09">September</option>
+            <option value="10">Oktober</option>
+            <option value="11">November</option>
+          </select>
+          <label for="tahunSelect" class="mr-2">Tahun:</label>
+          <select id="tahunSelect" class="form-control"></select>
+        </div>
+        <div class="table-responsive">
+          <div id="jurnalTableContainer"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Modal Detail Jurnal -->
+  <div class="modal fade" id="jurnalDetailModal" tabindex="-1" aria-labelledby="jurnalDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="jurnalDetailModalLabel">Detail Jurnal</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body" id="jurnalDetailBody">
+          <!-- Isi detail jurnal -->
+        </div>
+        <div class="modal-footer" id="jurnalDetailFooter">
+          <!-- Tombol ACC -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyDW5b9av9cBHh5AqEnxicBMIP0me-Goy_I",
+    authDomain: "epkl-c628b.firebaseapp.com",
+    projectId: "epkl-c628b",
+    storageBucket: "epkl-c628b.firebasestorage.app",
+    messagingSenderId: "41559318468",
+    appId: "1:41559318468:web:3711f4da0f7087d683ce91",
+    measurementId: "G-ZFWBRF40KQ"
+  };
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+  const db = firebase.firestore();
+
+  function daysInMonth(month, year) {
+    return new Date(year, month, 0).getDate();
+  }
+
+  function loadTahunSelect() {
+    const tahunSelect = document.getElementById('tahunSelect');
+    tahunSelect.innerHTML = '';
+    const tahunSekarang = new Date().getFullYear();
+    for (let t = tahunSekarang - 1; t <= tahunSekarang + 1; t++) {
+      tahunSelect.innerHTML += `<option value="${t}" ${t === tahunSekarang ? 'selected' : ''}>${t}</option>`;
+    }
+  }
+
+  function loadJurnalTable() {
+    const bulan = $('#bulanSelect').val();
+    const tahun = $('#tahunSelect').val();
+    const tableContainer = document.getElementById('jurnalTableContainer');
+    tableContainer.innerHTML = 'Loading...';
+    var namaPembimbing = localStorage.getItem('pembimbing_nama') || '';
+    db.collection('siswa').where('namaGuruPembimbing', '==', namaPembimbing).get().then((querySnapshot) => {
+      const siswaList = [];
+      querySnapshot.forEach((doc) => {
+        siswaList.push(Object.assign({id: doc.id}, doc.data()));
+      });
+      if (!siswaList.length) {
+        tableContainer.innerHTML = 'Tidak ada data siswa.';
+        return;
+      }
+      // Ambil data jurnal dari Google Sheets CSV
+      const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTLTWQbK7tUMoi4PWKvFWee6y_HWctOPX-Qqtey3hY-Ml-5f-K-Fo20hozAIYwn7yKqLpazG7eHwqZj/pub?gid=1129197363&single=true&output=csv&_=' + Date.now();
+      Papa.parse(csvUrl, {
+        download: true,
+        header: true,
+        complete: function(results) {
+          const jurnalRows = results.data;
+          // Map jurnal by NIS & tanggal
+          const jurnalMap = {};
+          // Map untuk akses detail jurnal per siswa, hari
+          const jurnalDetailMap = {};
+          jurnalRows.forEach(row => {
+            const nis = row['NIS'];
+            const tanggal = row['Tanggal'] || '';
+            // Ambil bulan dan hari dari tanggal (format dd/MM/yy atau dd-MM-yy)
+            let tglSplit = tanggal.includes('/') ? tanggal.split('/') : tanggal.split('-');
+            let bln = tglSplit.length > 1 ? tglSplit[1] : '';
+            let hari = tglSplit.length > 0 ? tglSplit[0] : '';
+            if (bln === bulan) {
+              if (!jurnalMap[nis]) jurnalMap[nis] = {};
+              jurnalMap[nis][hari] = true;
+              if (!jurnalDetailMap[nis]) jurnalDetailMap[nis] = {};
+              jurnalDetailMap[nis][hari] = row;
+            }
+          });
+          // Ambil data presensi dari Firebase
+          const hariMax = daysInMonth(parseInt(bulan), parseInt(tahun));
+          const tanggalAwal = `${tahun}-${bulan}-01`;
+          const tanggalAkhir = `${tahun}-${bulan}-${hariMax}`;
+          db.collection('presensi')
+            .where('tanggal', '>=', tanggalAwal)
+            .where('tanggal', '<=', tanggalAkhir)
+            .get()
+            .then(presensiSnapshot => {
+              // Map presensi by NIS & tanggal
+              const presensiMap = {};
+              presensiSnapshot.forEach(doc => {
+                const data = doc.data();
+                if (!presensiMap[data.nis]) presensiMap[data.nis] = {};
+                presensiMap[data.nis][data.tanggal] = data.status;
+              });
+              // Build table
+              let tableHtml = '<table id="jurnalTable" class="display table table-bordered table-striped" style="width:100%"><thead><tr><th>NIS</th><th>Nama Siswa</th><th>Kelas</th><th>Pembimbing</th>';
+              for (let d = 1; d <= hariMax; d++) {
+                tableHtml += `<th>${d}</th>`;
+              }
+              tableHtml += '</tr></thead><tbody>';
+              siswaList.forEach(siswa => {
+                tableHtml += `<tr><td>${siswa.nis}</td><td>${siswa.namaLengkap || siswa.nis}</td><td>${siswa.kelas || '-'}</td><td>${siswa.namaGuruPembimbing || '-'}</td>`;
+                for (let d = 1; d <= hariMax; d++) {
+                  let val = 0;
+                  let cellClass = 'cell-0';
+                  let jurnal = null;
+                  let cellText = '';
+                  // Tanggal format yyyy-mm-dd
+                  let tglStr = `${tahun}-${bulan.padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                  if (jurnalMap[siswa.nis] && jurnalMap[siswa.nis][d]) {
+                    val = 1;
+                    // Cari data jurnal detail untuk hari tsb
+                    if (window.jurnalDetailMap && window.jurnalDetailMap[siswa.nis] && window.jurnalDetailMap[siswa.nis][d]) {
+                      jurnal = window.jurnalDetailMap[siswa.nis][d];
+                    }
+                    if (jurnal && isAccGuru(jurnal)) {
+                      cellClass = 'cell-1-acc'; // hijau
+                    } else {
+                      cellClass = 'cell-1-belum'; // kuning
+                    }
+                    cellText = val;
+                    tableHtml += `<td class="${cellClass}" style="cursor:pointer" onclick="showJurnalDetail('${siswa.nis}','${d}')">${cellText}</td>`;
+                  } else {
+                    // Cek presensi
+                    let status = presensiMap[siswa.nis] && presensiMap[siswa.nis][tglStr] ? presensiMap[siswa.nis][tglStr] : '';
+                    if (status === 'Libur') {
+                      cellClass = 'cell-libur';
+                      cellText = 'L';
+                    } else if (status === 'Sakit') {
+                      cellClass = 'cell-sakit';
+                      cellText = 'S';
+                    } else if (status === 'Ijin') {
+                      cellClass = 'cell-ijin';
+                      cellText = 'I';
+                    } else {
+                      cellText = val;
+                    }
+                    tableHtml += `<td class="${cellClass}">${cellText}</td>`;
+                  }
+                }
+                tableHtml += '</tr>';
+              });
+              tableHtml += '</tbody></table>';
+              tableContainer.innerHTML = tableHtml;
+              // Simpan map detail ke window agar bisa diakses onclick
+              window.jurnalDetailMap = jurnalDetailMap;
+              window.jurnalRows = jurnalRows;
+              window.reloadJurnalTable = loadJurnalTable;
+              // Inisialisasi DataTables
+              if ($.fn.DataTable.isDataTable('#jurnalTable')) {
+                $('#jurnalTable').DataTable().destroy();
+              }
+              $('#jurnalTable').DataTable({
+                responsive: true,
+                autoWidth: false,
+                pageLength: 25,
+                order: [],
+                columnDefs: [
+                  { targets: [0,1,2,3], orderable: true },
+                  { targets: '_all', orderable: false }
+                ]
+              });
+            });
+        }
+      });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    loadTahunSelect();
+    loadJurnalTable();
+  });
+  $('#bulanSelect, #tahunSelect').on('change', loadJurnalTable);
+
+  // Optional: Logout handler
+  document.getElementById('logoutBtn')?.addEventListener('click', function() {
+    localStorage.removeItem('pembimbing_logged_in');
+    localStorage.removeItem('pembimbing_nama');
+    window.location.href = 'login.html';
+  });
+
+  // Fungsi untuk mengubah link Google Drive menjadi direct link (adopsi dari lihat_jurnal_page.dart)
+  function getDirectImageUrl(url) {
+    var driveOpen = /drive\.google\.com\/open\?id=([\w-]+)/;
+    var driveFile = /drive\.google\.com\/file\/d\/([\w-]+)/;
+    var matchOpen = url.match(driveOpen);
+    var matchFile = url.match(driveFile);
+    if (matchOpen) {
+      var id = matchOpen[1];
+      return 'https://drive.google.com/uc?export=download&id=' + id;
+    } else if (matchFile) {
+      var id = matchFile[1];
+      return 'https://drive.google.com/uc?export=download&id=' + id;
+    }
+    return url;
+  }
+
+  // Fungsi untuk mengambil fileId dari link Google Drive
+  function extractDriveId(url) {
+    var match = url.match(/id=([\w-]+)/);
+    if (match) return match[1];
+    match = url.match(/file\/d\/([\w-]+)/);
+    if (match) return match[1];
+    return null;
+  }
+  // Fungsi untuk mendapatkan array link gambar terbaik dari Google Drive
+  function getBestImageUrl(url) {
+    if (!url) return [];
+    url = url.trim();
+    // Jika sudah link CDN Googleusercontent, pakai langsung
+    if (url.includes('lh3.googleusercontent.com')) {
+      return [url];
+    }
+    // Google Drive ID extraction
+    var match = url.match(/id=([\w-]+)/);
+    if (!match) match = url.match(/file\/d\/([\w-]+)/);
+    var fileId = match ? match[1] : null;
+    if (fileId) {
+      return [
+        'https://drive.google.com/thumbnail?id=' + fileId,
+      ];
+    }
+    return [url];
+  }
+
+  // Fungsi untuk konversi link Google Drive ke format googleusercontent
+  function getGoogleusercontentImageUrl(url) {
+    if (!url) return '';
+    url = url.trim();
+    // Ambil ID dari format open?id=... atau file/d/...
+    var match = url.match(/id=([\w-]+)/);
+    if (!match) match = url.match(/file\/d\/([\w-]+)/);
+    var fileId = match ? match[1] : null;
+    if (fileId) {
+      return 'https://lh3.googleusercontent.com/d/' + fileId + '=s3000?authuser=0';
+    }
+    // Jika sudah link googleusercontent, pakai langsung
+    if (url.includes('lh3.googleusercontent.com')) {
+      return url;
+    }
+    return url;
+  }
+
+  // Fungsi untuk cek ACC Guru dengan toleransi spasi dan format
+  function isAccGuru(jurnal) {
+    if (!jurnal) return false;
+    let acc = (jurnal['ACC Guru'] || '').toString().trim();
+    return acc === '1' || acc === '1.0';
+  }
+
+  // Fungsi untuk tampilkan modal detail jurnal (global)
+  window.showJurnalDetail = function(nis, hari) {
+    const map = window.jurnalDetailMap || {};
+    const data = map[nis] && map[nis][hari] ? map[nis][hari] : null;
+    if (!data) return;
+    let html = '';
+    html += `<div><b>Tanggal:</b> ${data['Tanggal'] || ''}</div>`;
+    html += `<div><b>Nama:</b> ${data['NAMA'] || ''}</div>`;
+    html += `<div><b>NIS:</b> ${data['NIS'] || ''}</div>`;
+    html += `<div><b>Nama Pekerjaan:</b> ${data['Nama Pekerjaan'] || ''}</div>`;
+    // Foto Kegiatan: tampilkan gambar langsung jika link, adopsi cara lihat_jurnal_page.dart
+    let foto = data['Foto Kegiatan'] || '';
+    let fotoHtml = '-';
+    if (foto.startsWith('http')) {
+      let imgUrl = getGoogleusercontentImageUrl(foto);
+      let imgTag = `<img src="${imgUrl}" alt="Foto Kegiatan" style="max-width:300%;max-height:400px;display:block;margin:8px 0;" >`;
+      fotoHtml = imgTag + `<div><a href="${foto}" target="_blank">Lihat Foto Asli</a></div>`;
+    } else if (foto) {
+      fotoHtml = `<div><b>Foto Kegiatan:</b><br>${foto}</div>`;
+    } else {
+      fotoHtml = `<div><b>Foto Kegiatan:</b> -</div>`;
+    }
+    html += fotoHtml;
+    html += `<div><b>PDF:</b> ${data['Merged Doc URL - PKL'] ? `<a href='${data['Merged Doc URL - PKL']}' target='_blank'>Lihat PDF</a>` : '-'}</div>`;
+    html += `<div><b>ACC Guru:</b> ${data['ACC Guru'] || '0'}</div>`;
+    html += `<div><b>ACC Instruktur:</b> ${data['ACC Instruktur'] || '0'}</div>`;
+    document.getElementById('jurnalDetailBody').innerHTML = html;
+    // Tombol ACC
+    let footer = '';
+    if (data['ACC Guru'] == '0' || data['ACC Guru'] == 0 || data['ACC Guru'] === undefined || data['ACC Guru'] === '') {
+      footer += `<button class="btn btn-success" onclick="accJurnal('${data['NIS']}', '${data['Tanggal']}', 'ACC Guru')">ACC Guru</button>`;
+    } else {
+      footer += `<span class="text-success font-weight-bold">Sudah ACC Guru</span>`;
+    }
+    if (data['ACC Instruktur'] == '0' || data['ACC Instruktur'] == 0 || data['ACC Instruktur'] === undefined || data['ACC Instruktur'] === '') {
+      footer += `<button class="btn btn-primary ml-2" onclick="accJurnal('${data['NIS']}', '${data['Tanggal']}', 'ACC Instruktur')">ACC Instruktur</button>`;
+    } else {
+      footer += `<span class="text-primary font-weight-bold ml-2">Sudah ACC Instruktur</span>`;
+    }
+    document.getElementById('jurnalDetailFooter').innerHTML = footer;
+    $('#jurnalDetailModal').modal('show');
+  }
+  // Fungsi dummy untuk ACC (nanti ganti dengan Apps Script endpoint) (global)
+  window.accJurnal = function(nis, tanggal, accField = 'ACC Guru') {
+    var url = '../proxy.php'; // path relatif
+    var data = {
+      nis: nis,
+      tanggal: tanggal,
+      accField: accField,
+      accValue: '1'
+    };
+    var formBody = Object.keys(data).map(key => encodeURIComponent(key) + '=' + encodeURIComponent(data[key])).join('&');
+    $('#jurnalDetailFooter').html('<span class="text-info">Menyimpan...</span>');
+    fetch(url, {
+      method: 'POST',
+      body: formBody,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    })
+    .then(res => res.json())
+    .then(res => {
+      if (res.success) {
+        $('#jurnalDetailModal').modal('hide');
+        // Polling otomatis agar warna hijau muncul segera setelah ACC Guru update
+        pollReloadJurnalTable();
+      } else {
+        alert('Gagal update: ' + (res.error || 'Unknown error'));
+      }
+    })
+    .catch(err => {
+      alert('Gagal update: ' + err.message);
+    });
+  }
+
+  // Polling otomatis reload tabel jurnal setelah ACC
+  function pollReloadJurnalTable(tries = 0) {
+    if (window.reloadJurnalTable) window.reloadJurnalTable();
+    if (tries < 5) { // Polling max 5x
+      setTimeout(() => pollReloadJurnalTable(tries + 1), 3000);
+    }
+  }
+</script>
+<!-- Pastikan AdminLTE JS sudah di-include sebelum </body> -->
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+<!-- Tambahkan custom CSS agar sidebar responsif di HP -->
+<style>
+@media (max-width: 991.98px) {
+  .main-sidebar {
+    left: -250px;
+  }
+  .sidebar-open .main-sidebar {
+    left: 0;
+  }
+  .content-wrapper {
+    margin-left: 0 !important;
+  }
+}
+</style>
+</body>
+</html> 

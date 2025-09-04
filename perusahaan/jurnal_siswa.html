@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Jurnal Siswa PKL</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <style>
+    .cell-0 { background: #f44336; color: white; }
+    .cell-1-acc { background: #4caf50; color: white; }
+    .cell-1-belum { background: #ffeb3b; color: #333; }
+    .cell-libur { background: #2196f3; color: white; }
+    .cell-sakit { background: #9c27b0; color: white; }
+    .cell-ijin { background: #ff9800; color: white; }
+    
+    /* CSS untuk foto dalam modal */
+    .modal-body img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .modal-body div {
+      margin-bottom: 10px;
+    }
+    
+    .modal-body b {
+      color: #333;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body class="hold-transition sidebar-mini layout-fixed">
+<script>
+  if (!localStorage.getItem('perusahaan_logged_in')) {
+    window.location.href = 'login.html';
+  }
+</script>
+<div class="wrapper">
+  <!-- Navbar -->
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+      </li>
+    </ul>
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="#" id="logoutBtn">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+      </li>
+    </ul>
+  </nav>
+  <!-- Sidebar -->
+  <aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <a href="index.html" class="brand-link">
+      <span class="brand-text font-weight-light">ePKL Perusahaan</span>
+    </a>
+    <div class="sidebar">
+      <nav class="mt-2">
+        <ul class="nav nav-pills nav-sidebar flex-column">
+          <li class="nav-item"><a href="index.html" class="nav-link"><i class="nav-icon fas fa-tachometer-alt"></i>Dashboard</a></li>
+          <li class="nav-item"><a href="presensi_siswa.html" class="nav-link"><i class="nav-icon fas fa-calendar-check"></i>Presensi Siswa</a></li>
+          <li class="nav-item"><a href="jurnal_siswa.html" class="nav-link active"><i class="nav-icon fas fa-book"></i>Jurnal Siswa</a></li>
+        </ul>
+      </nav>
+    </div>
+  </aside>
+  <div class="content-wrapper">
+    <div class="content-header">
+      <div class="container-fluid">
+        <h2>Jurnal Siswa PKL</h2>
+        <div class="form-inline mb-3">
+          <label for="bulanSelect" class="mr-2">Pilih Bulan:</label>
+          <select id="bulanSelect" class="form-control mr-2">
+            <option value="07">Juli</option>
+            <option value="08">Agustus</option>
+            <option value="09">September</option>
+            <option value="10">Oktober</option>
+            <option value="11">November</option>
+          </select>
+          <label for="tahunSelect" class="mr-2">Tahun:</label>
+          <select id="tahunSelect" class="form-control"></select>
+        </div>
+        <div class="table-responsive">
+          <div id="jurnalTableContainer"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Modal Detail Jurnal -->
+  <div class="modal fade" id="jurnalDetailModal" tabindex="-1" aria-labelledby="jurnalDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="jurnalDetailModalLabel">Detail Jurnal</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body" id="jurnalDetailBody">
+          <!-- Isi detail jurnal -->
+        </div>
+        <div class="modal-footer" id="jurnalDetailFooter">
+          <!-- Tombol ACC -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyDW5b9av9cBHh5AqEnxicBMIP0me-Goy_I",
+    authDomain: "epkl-c628b.firebaseapp.com",
+    projectId: "epkl-c628b",
+    storageBucket: "epkl-c628b.firebasestorage.app",
+    messagingSenderId: "41559318468",
+    appId: "1:41559318468:web:3711f4da0f7087d683ce91",
+    measurementId: "G-ZFWBRF40KQ"
+  };
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+  const db = firebase.firestore();
+
+  function daysInMonth(month, year) {
+    return new Date(year, month, 0).getDate();
+  }
+
+  function loadTahunSelect() {
+    const tahunSelect = document.getElementById('tahunSelect');
+    tahunSelect.innerHTML = '';
+    const tahunSekarang = new Date().getFullYear();
+    for (let t = tahunSekarang - 1; t <= tahunSekarang + 1; t++) {
+      tahunSelect.innerHTML += `<option value="${t}" ${t === tahunSekarang ? 'selected' : ''}>${t}</option>`;
+    }
+  }
+
+  function loadJurnalTable() {
+    const bulan = $('#bulanSelect').val();
+    const tahun = $('#tahunSelect').val();
+    const tableContainer = document.getElementById('jurnalTableContainer');
+    tableContainer.innerHTML = 'Loading...';
+    
+    // Get company and program keahlian from localStorage
+    const namaPerusahaan = localStorage.getItem('perusahaan_nama') || '';
+    const programKeahlian = localStorage.getItem('perusahaan_program_keahlian') || '';
+    
+    // Query students from specific company and program keahlian
+    db.collection('siswa')
+      .get()
+      .then((querySnapshot) => {
+        const students = [];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data.namaPerusahaan === namaPerusahaan && 
+              data.kelas && 
+              data.kelas.toString().toUpperCase().includes(programKeahlian)) {
+            students.push({
+              id: doc.id,
+              ...data
+            });
+          }
+        });
+        
+        if (students.length === 0) {
+          document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" class="text-center">Tidak ada data siswa PKL di perusahaan ini.</td></tr>';
+          return;
+        }
+        
+        // Sort students by name
+        students.sort((a, b) => {
+          const namaA = (a.namaLengkap || a.nis || '').toLowerCase();
+          const namaB = (b.namaLengkap || b.nis || '').toLowerCase();
+          return namaA.localeCompare(namaB);
+        });
+        
+        // Ambil data jurnal dari Google Sheets CSV
+        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTLTWQbK7tUMoi4PWKvFWee6y_HWctOPX-Qqtey3hY-Ml-5f-K-Fo20hozAIYwn7yKqLpazG7eHwqZj/pub?gid=1129197363&single=true&output=csv&_=' + Date.now();
+        Papa.parse(csvUrl, {
+          download: true,
+          header: true,
+          complete: function(results) {
+            const jurnalRows = results.data;
+            // Map jurnal by NIS & tanggal
+            const jurnalMap = {};
+            // Map untuk akses detail jurnal per siswa, hari
+            const jurnalDetailMap = {};
+            jurnalRows.forEach(row => {
+              const nis = row['NIS'];
+              const tanggal = row['Tanggal'] || '';
+              // Ambil bulan dan hari dari tanggal (format dd/MM/yy atau dd-MM-yy)
+              let tglSplit = tanggal.includes('/') ? tanggal.split('/') : tanggal.split('-');
+              let bln = tglSplit.length > 1 ? tglSplit[1] : '';
+              let hari = tglSplit.length > 0 ? tglSplit[0] : '';
+              if (bln === bulan) {
+                if (!jurnalMap[nis]) jurnalMap[nis] = {};
+                jurnalMap[nis][hari] = true;
+                if (!jurnalDetailMap[nis]) jurnalDetailMap[nis] = {};
+                jurnalDetailMap[nis][hari] = row;
+              }
+            });
+            
+            let tableHtml = '<table id="jurnalTable" class="display table table-bordered table-striped" style="width:100%"><thead><tr><th>NIS</th><th>Nama Siswa</th><th>Kelas</th>';
+            const hari = daysInMonth(parseInt(bulan), parseInt(tahun));
+            let startTanggal = 1;
+            if (bulan === '07') startTanggal = 14;
+            for (let d = startTanggal; d <= hari; d++) {
+              tableHtml += `<th>${d}</th>`;
+            }
+            tableHtml += '</tr></thead><tbody>';
+            
+            students.forEach(siswa => {
+              tableHtml += `<tr><td>${siswa.nis}</td><td>${siswa.namaLengkap || siswa.nis}</td><td>${siswa.kelas || '-'}</td>`;
+              for (let d = startTanggal; d <= hari; d++) {
+                const tgl = `${tahun}-${bulan}-${String(d).padStart(2, '0')}`;
+                const jurnalData = jurnalMap[siswa.nis] && jurnalMap[siswa.nis][d];
+                let cell = '';
+                let bg = '';
+                let cellClass = '';
+                
+                if (jurnalData) {
+                  // Ambil data detail jurnal
+                  const jurnalDetail = jurnalDetailMap[siswa.nis] && jurnalDetailMap[siswa.nis][d];
+                  if (jurnalDetail) {
+                    const accGuru = jurnalDetail['ACC Guru'] === '1';
+                    const accInstruktur = jurnalDetail['ACC Instruktur'] === '1';
+                    
+                    if (accGuru && accInstruktur) {
+                      cell = '✓';
+                      bg = 'style="background:#4caf50;color:white"';
+                      cellClass = 'cell-1-acc';
+                    } else if (accGuru || accInstruktur) {
+                      cell = '△';
+                      bg = 'style="background:#ffeb3b;color:#333"';
+                      cellClass = 'cell-1-belum';
+                    } else {
+                      cell = '1';
+                      bg = 'style="background:#4caf50;color:white"';
+                      cellClass = 'cell-1-acc';
+                    }
+                  } else {
+                    cell = '1';
+                    bg = 'style="background:#4caf50;color:white"';
+                    cellClass = 'cell-1-acc';
+                  }
+                } else {
+                  cell = '○';
+                  bg = 'style="background:#f44336;color:white"';
+                  cellClass = 'cell-0';
+                }
+                
+                tableHtml += `<td ${bg} style="cursor:pointer" onclick="showJurnalDetail('${siswa.nis}','${siswa.namaLengkap || siswa.nis}','${tgl}')">${cell}</td>`;
+              }
+              tableHtml += '</tr>';
+            });
+            tableHtml += '</tbody></table>';
+            tableContainer.innerHTML = tableHtml;
+            
+            // Inisialisasi DataTables
+            if ($.fn.DataTable.isDataTable('#jurnalTable')) {
+              $('#jurnalTable').DataTable().destroy();
+            }
+            $('#jurnalTable').DataTable({
+              responsive: true,
+              autoWidth: false,
+              pageLength: 25,
+              order: [[1, 'asc']], // Sort by name
+              columnDefs: [
+                { targets: [0,1,2], orderable: true },
+                { targets: '_all', orderable: false }
+              ]
+            });
+            
+            // Store jurnal detail map globally
+            window.jurnalDetailMap = jurnalDetailMap;
+          },
+          error: function(error) {
+            tableContainer.innerHTML = 'Error loading jurnal data: ' + error.message;
+          }
+        });
+      });
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    loadTahunSelect();
+    loadJurnalTable();
+  });
+  $('#bulanSelect, #tahunSelect').on('change', loadJurnalTable);
+
+  // Fungsi untuk konversi link Google Drive ke format googleusercontent
+  function getGoogleusercontentImageUrl(url) {
+    if (!url) return '';
+    url = url.trim();
+    // Ambil ID dari format open?id=... atau file/d/...
+    var match = url.match(/id=([\w-]+)/);
+    if (!match) match = url.match(/file\/d\/([\w-]+)/);
+    var fileId = match ? match[1] : null;
+    if (fileId) {
+      return 'https://lh3.googleusercontent.com/d/' + fileId + '=s3000?authuser=0';
+    }
+    // Jika sudah link googleusercontent, pakai langsung
+    if (url.includes('lh3.googleusercontent.com')) {
+      return url;
+    }
+    return url;
+  }
+
+  // Show jurnal detail modal
+  window.showJurnalDetail = function(nis, nama, tanggal) {
+    // Extract day from tanggal (format: yyyy-mm-dd)
+    const day = parseInt(tanggal.split('-')[2]);
+    const jurnalData = window.jurnalDetailMap && window.jurnalDetailMap[nis] && window.jurnalDetailMap[nis][day];
+    const modalBody = document.getElementById('jurnalDetailBody');
+    const modalFooter = document.getElementById('jurnalDetailFooter');
+    
+    if (jurnalData) {
+      let html = '';
+      html += `<div><b>Tanggal:</b> ${jurnalData['Tanggal'] || tanggal}</div>`;
+      html += `<div><b>Nama:</b> ${nama}</div>`;
+      html += `<div><b>NIS:</b> ${nis}</div>`;
+      html += `<div><b>Nama Pekerjaan:</b> ${jurnalData['Nama Pekerjaan'] || '-'}</div>`;
+      html += `<div><b>Kegiatan:</b> ${jurnalData['Kegiatan'] || '-'}</div>`;
+      
+      // Foto Kegiatan: tampilkan gambar langsung jika link
+      let foto = jurnalData['Foto Kegiatan'] || '';
+      let fotoHtml = '';
+      if (foto.startsWith('http')) {
+        let imgUrl = getGoogleusercontentImageUrl(foto);
+        let imgTag = `<img src="${imgUrl}" alt="Foto Kegiatan" style="max-width:100%;max-height:500px;display:block;margin:10px 0;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);" >`;
+        fotoHtml = `<div><b>Foto Kegiatan:</b></div>${imgTag}<div><a href="${foto}" target="_blank" class="btn btn-sm btn-outline-primary">Lihat Foto Asli</a></div>`;
+      } else if (foto) {
+        fotoHtml = `<div><b>Foto Kegiatan:</b><br>${foto}</div>`;
+      } else {
+        fotoHtml = `<div><b>Foto Kegiatan:</b> -</div>`;
+      }
+      html += fotoHtml;
+      
+      html += `<div><b>PDF:</b> ${jurnalData['Merged Doc URL - PKL'] ? `<a href='${jurnalData['Merged Doc URL - PKL']}' target='_blank'>Lihat PDF</a>` : '-'}</div>`;
+      html += `<div><b>ACC Guru:</b> ${jurnalData['ACC Guru'] === '1' ? '✓' : '✗'}</div>`;
+      html += `<div><b>ACC Instruktur:</b> ${jurnalData['ACC Instruktur'] === '1' ? '✓' : '✗'}</div>`;
+      
+      modalBody.innerHTML = html;
+      
+      // For companies, we can only view, not edit
+      modalFooter.innerHTML = `
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+      `;
+    } else {
+      modalBody.innerHTML = `
+        <p><strong>NIS:</strong> ${nis}</p>
+        <p><strong>Nama:</strong> ${nama}</p>
+        <p><strong>Tanggal:</strong> ${tanggal}</p>
+        <p><strong>Status:</strong> Belum ada jurnal</p>
+      `;
+      modalFooter.innerHTML = `
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+      `;
+    }
+    
+    $('#jurnalDetailModal').modal('show');
+  };
+
+  // Logout handler
+  document.getElementById('logoutBtn')?.addEventListener('click', function() {
+    localStorage.removeItem('perusahaan_logged_in');
+    localStorage.removeItem('perusahaan_program_keahlian');
+    localStorage.removeItem('perusahaan_nama');
+    window.location.href = 'login.html';
+  });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+<style>
+@media (max-width: 991.98px) {
+  .main-sidebar {
+    left: -250px;
+  }
+  .sidebar-open .main-sidebar {
+    left: 0;
+  }
+  .content-wrapper {
+    margin-left: 0 !important;
+  }
+}
+</style>
+</body>
+</html> 

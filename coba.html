@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Data dari Sheet1</title>
+</head>
+<body>
+  <h2>Data dari Google Sheets - Sheet1</h2>
+  <table border="1" id="sheet-data">
+    <thead></thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const sheetURL = 'https://docs.google.com/spreadsheets/d/1iB40Ym_LqQHsIyI2rJx1yAs-KmSd7Ud9La6qbkDV9OI/gviz/tq?tqx=out:json&sheet=Sheet1';
+
+    fetch(sheetURL)
+      .then(res => res.text())
+      .then(text => {
+        const json = JSON.parse(text.substring(47).slice(0, -2));
+        const table = json.table;
+        const thead = document.querySelector('#sheet-data thead');
+        const tbody = document.querySelector('#sheet-data tbody');
+
+        // Render header
+        const headerRow = document.createElement('tr');
+        table.cols.forEach(col => {
+          const th = document.createElement('th');
+          th.textContent = col.label;
+          headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+
+        // Render rows
+        table.rows.forEach(row => {
+          const tr = document.createElement('tr');
+          row.c.forEach(cell => {
+            const td = document.createElement('td');
+            td.textContent = cell?.v ?? '';
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+      })
+      .catch(err => {
+        console.error('Gagal mengambil data:', err);
+      });
+  </script>
+</body>
+</html>

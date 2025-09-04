@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Data Siswa PKL</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+</head>
+<body class="hold-transition sidebar-mini layout-fixed">
+<script>
+  if (!localStorage.getItem('pembimbing_logged_in')) {
+    window.location.href = 'login.html';
+  }
+</script>
+<div class="wrapper">
+  <!-- Navbar -->
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+      </li>
+    </ul>
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="#" id="logoutBtn">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+      </li>
+    </ul>
+  </nav>
+  <!-- Sidebar -->
+  <aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <a href="index.html" class="brand-link">
+      <span class="brand-text font-weight-light">ePKL Pembimbing</span>
+    </a>
+    <div class="sidebar">
+      <nav class="mt-2">
+        <ul class="nav nav-pills nav-sidebar flex-column">
+          <li class="nav-item"><a href="index.html" class="nav-link"><i class="nav-icon fas fa-tachometer-alt"></i>Dashboard</a></li>
+          <li class="nav-item"><a href="data_siswa.html" class="nav-link active"><i class="nav-icon fas fa-users"></i>Data Siswa</a></li>
+          <li class="nav-item"><a href="presensi_siswa.html" class="nav-link"><i class="nav-icon fas fa-calendar-check"></i>Presensi Siswa</a></li>
+          <li class="nav-item"><a href="jurnal_siswa.html" class="nav-link"><i class="nav-icon fas fa-book"></i>Jurnal Siswa</a></li>
+        </ul>
+      </nav>
+    </div>
+  </aside>
+  <div class="content-wrapper">
+    <div class="content-header">
+      <div class="container-fluid">
+        <h2>Data Siswa PKL</h2>
+        <div class="table-responsive">
+          <table id="siswaTable" class="display table table-bordered table-striped" style="width:100%">
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>NIS</th>
+                <th>Nama Siswa</th>
+                <th>Tempat PKL</th>
+                <th>Password</th>
+                <th>Presensi</th>
+                <th>Jurnal</th>
+                <th>Edit</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Jurnal -->
+  <div class="modal fade" id="jurnalModal" tabindex="-1" aria-labelledby="jurnalModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="jurnalModalLabel">Jurnal Siswa</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="bulanSelect">Pilih Bulan:</label>
+            <select id="bulanSelect" class="form-control" style="width:auto;display:inline-block;">
+              <option value="7">Juli</option>
+              <option value="8">Agustus</option>
+              <option value="9">September</option>
+              <option value="10">Oktober</option>
+              <option value="11">November</option>
+            </select>
+            <select id="tahunSelect" class="form-control" style="width:auto;display:inline-block;"></select>
+          </div>
+          <div id="jurnalTableContainer"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Edit Siswa -->
+  <div class="modal fade" id="editSiswaModal" tabindex="-1" aria-labelledby="editSiswaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editSiswaModalLabel">Edit Data Siswa</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <form id="editSiswaForm">
+          <div class="modal-body">
+            <input type="hidden" id="editSiswaId">
+            <div class="form-group">
+              <label>NIS</label>
+              <input type="text" class="form-control" id="editNis" readonly>
+            </div>
+            <div class="form-group">
+              <label>Nama Lengkap</label>
+              <input type="text" class="form-control" id="editNamaLengkap" required>
+            </div>
+            <div class="form-group">
+              <label>Password</label>
+              <input type="text" class="form-control" id="editPassword" required>
+            </div>
+            <div class="form-group">
+              <label>Kelas</label>
+              <select class="form-control" id="editKelas" required></select>
+            </div>
+            <div class="form-group">
+              <label>Tempat PKL</label>
+              <select class="form-control" id="editPerusahaan" required></select>
+            </div>
+            <div class="form-group">
+              <label>Guru Pembimbing</label>
+              <select class="form-control" id="editGuruPembimbing" required></select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyDW5b9av9cBHh5AqEnxicBMIP0me-Goy_I",
+    authDomain: "epkl-c628b.firebaseapp.com",
+    projectId: "epkl-c628b",
+    storageBucket: "epkl-c628b.firebasestorage.app",
+    messagingSenderId: "41559318468",
+    appId: "1:41559318468:web:3711f4da0f7087d683ce91",
+    measurementId: "G-ZFWBRF40KQ"
+  };
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+  const db = firebase.firestore();
+
+  function loadData() {
+    const tableBody = document.getElementById('tableBody');
+    tableBody.innerHTML = '';
+    var namaPembimbing = localStorage.getItem('pembimbing_nama') || '';
+    db.collection('siswa').where('namaGuruPembimbing', '==', namaPembimbing).get().then((querySnapshot) => {
+      let no = 1;
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${no++}</td>
+          <td>${data.nis || '-'}</td>
+          <td>${data.namaLengkap || '-'}</td>
+          <td>${data.namaPerusahaan || '-'}</td>
+          <td>${data.password || '-'}</td>
+          <td><button class="btn btn-info btn-sm" onclick="lihatPresensi('${doc.id}')"><i class="fas fa-calendar-check"></i> Lihat Presensi</button></td>
+          <td><button class="btn btn-success btn-sm" onclick="lihatJurnal('${doc.id}')"><i class="fas fa-book"></i> Lihat Jurnal</button></td>
+          <td><button class="btn btn-warning btn-sm" onclick="editSiswa('${doc.id}')"><i class="fas fa-edit"></i> Edit</button></td>
+        `;
+        tableBody.appendChild(row);
+      });
+      if ($.fn.DataTable.isDataTable('#siswaTable')) {
+        $('#siswaTable').DataTable().destroy();
+      }
+      $('#siswaTable').DataTable({
+        responsive: true,
+        autoWidth: false,
+        pageLength: 25,
+        order: [],
+      });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', loadData);
+
+  // Placeholder function for buttons
+  function lihatPresensi(id) {
+    $('#jurnalModal').modal('show');
+    // Isi tahun (otomatis, misal 2025)
+    const tahunSelect = document.getElementById('tahunSelect');
+    tahunSelect.innerHTML = '';
+    const tahunSekarang = new Date().getFullYear();
+    for (let t = tahunSekarang - 1; t <= tahunSekarang + 1; t++) {
+      tahunSelect.innerHTML += `<option value="${t}" ${t === tahunSekarang ? 'selected' : ''}>${t}</option>`;
+    }
+    $('#jurnalModal').data('siswaId', id || '');
+    loadJurnalTable();
+  }
+  // Fitur lihat jurnal
+  function daysInMonth(month, year) {
+    return new Date(year, month, 0).getDate();
+  }
+  function formatDate(year, month, day) {
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  }
+  function lihatJurnal(id) {
+    alert('Fitur lihat jurnal untuk siswa ID: ' + id);
+  }
+  $('#bulanSelect, #tahunSelect').on('change', loadJurnalTable);
+  function loadJurnalTable() {
+    const bulan = parseInt($('#bulanSelect').val());
+    const tahun = parseInt($('#tahunSelect').val());
+    const siswaId = $('#jurnalModal').data('siswaId');
+    const tableContainer = document.getElementById('jurnalTableContainer');
+    tableContainer.innerHTML = 'Loading...';
+    let siswaQuery = db.collection('siswa');
+    if (siswaId) {
+      siswaQuery = siswaQuery.doc(siswaId).get().then(doc => doc.exists ? [Object.assign({id: doc.id}, doc.data())] : []);
+    } else {
+      var namaPembimbing = localStorage.getItem('pembimbing_nama') || '';
+      siswaQuery = siswaQuery.where('namaGuruPembimbing', '==', namaPembimbing).get().then(qs => {
+        return qs.docs.map(doc => Object.assign({id: doc.id}, doc.data()));
+      });
+    }
+    siswaQuery.then(siswaList => {
+      if (!siswaList.length) {
+        tableContainer.innerHTML = 'Tidak ada data siswa.';
+        return;
+      }
+      const nisList = siswaList.map(s => s.nis);
+      db.collection('presensi')
+        .where('tanggal', '>=', `${tahun}-${String(bulan).padStart(2, '0')}-01`)
+        .where('tanggal', '<=', `${tahun}-${String(bulan).padStart(2, '0')}-${daysInMonth(bulan, tahun)}`)
+        .get()
+        .then(qs => {
+          const presensiData = {};
+          qs.forEach(doc => {
+            const data = doc.data();
+            if (!nisList.includes(data.nis)) return;
+            if (!presensiData[data.nis]) presensiData[data.nis] = {};
+            if (!presensiData[data.nis][data.tanggal]) presensiData[data.nis][data.tanggal] = [];
+            presensiData[data.nis][data.tanggal].push(data);
+          });
+          let tableHtml = '<table class="table table-bordered table-sm"><thead><tr><th>Nama Siswa</th>';
+          const hari = daysInMonth(bulan, tahun);
+          for (let d = 1; d <= hari; d++) {
+            tableHtml += `<th>${d}</th>`;
+          }
+          tableHtml += '</tr></thead><tbody>';
+          siswaList.forEach(siswa => {
+            tableHtml += `<tr><td>${siswa.namaLengkap || siswa.nis}</td>`;
+            for (let d = 1; d <= hari; d++) {
+              const tgl = formatDate(tahun, bulan, d);
+              const dataHari = (presensiData[siswa.nis] && presensiData[siswa.nis][tgl]) ? presensiData[siswa.nis][tgl] : [];
+              let cell = '';
+              let bg = '';
+              // Cek status khusus
+              const isLibur = dataHari.some(x => x.status === 'Libur');
+              const isSakit = dataHari.some(x => x.status === 'Sakit');
+              const isIjin = dataHari.some(x => x.status === 'Ijin');
+              if (isLibur) {
+                cell = 'L';
+                bg = 'style="background:#2196f3;color:white"';
+              } else if (isSakit) {
+                cell = 'S';
+                bg = 'style="background:#9c27b0;color:white"';
+              } else if (isIjin) {
+                cell = 'I';
+                bg = 'style="background:#ff9800;color:white"';
+              } else if (dataHari.length === 0) {
+                cell = 'A';
+                bg = 'style="background:#f44336;color:white"';
+              } else {
+                const masuk = dataHari.filter(x => x.status === 'Absen Masuk').sort((a, b) => a.jamMasuk > b.jamMasuk ? 1 : -1).pop();
+                const pulang = dataHari.filter(x => x.status === 'Absen Pulang').sort((a, b) => a.jamPulang > b.jamPulang ? 1 : -1).pop();
+                if (masuk && pulang) {
+                  const masukTime = masuk.jamMasuk.split(':').map(Number);
+                  const pulangTime = pulang.jamPulang.split(':').map(Number);
+                  const masukDate = new Date(2000,0,1,masukTime[0],masukTime[1],masukTime[2]);
+                  const pulangDate = new Date(2000,0,1,pulangTime[0],pulangTime[1],pulangTime[2]);
+                  let diff = (pulangDate - masukDate) / (1000*60*60);
+                  if (diff < 0) diff += 24;
+                  if (diff > 4) {
+                    cell = 'H';
+                    bg = 'style="background:#4caf50;color:white"';
+                  } else {
+                    cell = 'PLA';
+                    bg = 'style="background:#ffeb3b"';
+                  }
+                } else if (masuk && !pulang) {
+                  cell = 'TAP';
+                  bg = 'style="background:#ffeb3b"';
+                } else {
+                  cell = 'A';
+                  bg = 'style="background:#f44336;color:white"';
+                }
+              }
+              tableHtml += `<td ${bg}>${cell}</td>`;
+            }
+            tableHtml += '</tr>';
+          });
+          tableHtml += '</tbody></table>';
+          tableContainer.innerHTML = tableHtml;
+        });
+    });
+  }
+  window.lihatPresensi = lihatPresensi;
+  window.lihatJurnal = lihatJurnal;
+  // Ambil data option kelas unik dari Firestore
+  function loadKelasOptions(selectedKelas) {
+    db.collection('siswa').get().then((querySnapshot) => {
+      const kelasSet = new Set();
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.kelas) kelasSet.add(data.kelas);
+      });
+      const kelasSelect = document.getElementById('editKelas');
+      kelasSelect.innerHTML = '';
+      Array.from(kelasSet).sort().forEach(kelas => {
+        const option = document.createElement('option');
+        option.value = kelas;
+        option.textContent = kelas;
+        if (kelas === selectedKelas) option.selected = true;
+        kelasSelect.appendChild(option);
+      });
+    });
+  }
+  // Ambil data perusahaan
+  function loadPerusahaanOptions(selectedPerusahaan) {
+    db.collection('perusahaan').get().then((querySnapshot) => {
+      const perusahaanSelect = document.getElementById('editPerusahaan');
+      perusahaanSelect.innerHTML = '';
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.namaPerusahaan) {
+          const option = document.createElement('option');
+          option.value = data.namaPerusahaan;
+          option.textContent = data.namaPerusahaan;
+          if (data.namaPerusahaan === selectedPerusahaan) option.selected = true;
+          perusahaanSelect.appendChild(option);
+        }
+      });
+    });
+  }
+  // Ambil data guru pembimbing
+  function loadGuruPembimbingOptions(selectedGuru) {
+    db.collection('guru_pembimbing').get().then((querySnapshot) => {
+      const guruSelect = document.getElementById('editGuruPembimbing');
+      guruSelect.innerHTML = '';
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.namaLengkap) {
+          const option = document.createElement('option');
+          option.value = data.namaLengkap;
+          option.textContent = data.namaLengkap;
+          if (data.namaLengkap === selectedGuru) option.selected = true;
+          guruSelect.appendChild(option);
+        }
+      });
+    });
+  }
+  // Fungsi untuk buka modal edit siswa dan isi data
+  window.editSiswa = function(id) {
+    db.collection('siswa').doc(id).get().then((doc) => {
+      if (doc.exists) {
+        const data = doc.data();
+        document.getElementById('editSiswaId').value = id;
+        document.getElementById('editNis').value = data.nis || '';
+        document.getElementById('editNamaLengkap').value = data.namaLengkap || '';
+        document.getElementById('editPassword').value = data.password || '';
+        loadKelasOptions(data.kelas || '');
+        loadPerusahaanOptions(data.namaPerusahaan || '');
+        loadGuruPembimbingOptions(data.namaGuruPembimbing || '');
+        $('#editSiswaModal').modal('show');
+      }
+    });
+  }
+  // Handle submit edit siswa
+  $('#editSiswaForm').on('submit', function(e) {
+    e.preventDefault();
+    const id = document.getElementById('editSiswaId').value;
+    const updateData = {
+      namaLengkap: document.getElementById('editNamaLengkap').value,
+      password: document.getElementById('editPassword').value,
+      kelas: document.getElementById('editKelas').value,
+      namaPerusahaan: document.getElementById('editPerusahaan').value,
+      namaGuruPembimbing: document.getElementById('editGuruPembimbing').value
+    };
+    db.collection('siswa').doc(id).update(updateData)
+      .then(() => {
+        $('#editSiswaModal').modal('hide');
+        loadData();
+      })
+      .catch((error) => {
+        alert('Error: ' + error);
+      });
+  });
+</script>
+<script>
+  // Optional: Logout handler
+  document.getElementById('logoutBtn')?.addEventListener('click', function() {
+    localStorage.removeItem('pembimbing_logged_in');
+    localStorage.removeItem('pembimbing_nama');
+    window.location.href = 'login.html';
+  });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+<style>
+@media (max-width: 991.98px) {
+  .main-sidebar {
+    left: -250px;
+  }
+  .sidebar-open .main-sidebar {
+    left: 0;
+  }
+  .content-wrapper {
+    margin-left: 0 !important;
+  }
+}
+</style>
+</body>
+</html> 

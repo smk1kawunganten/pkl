@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Presensi Siswa PKL</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+</head>
+<body class="hold-transition sidebar-mini layout-fixed">
+<script>
+  if (!localStorage.getItem('perusahaan_logged_in')) {
+    window.location.href = 'login.html';
+  }
+</script>
+<div class="wrapper">
+  <!-- Navbar -->
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+      </li>
+    </ul>
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="#" id="logoutBtn">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+      </li>
+    </ul>
+  </nav>
+  <!-- Sidebar -->
+  <aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <a href="index.html" class="brand-link">
+      <span class="brand-text font-weight-light">ePKL Perusahaan</span>
+    </a>
+    <div class="sidebar">
+      <nav class="mt-2">
+        <ul class="nav nav-pills nav-sidebar flex-column">
+          <li class="nav-item"><a href="index.html" class="nav-link"><i class="nav-icon fas fa-tachometer-alt"></i>Dashboard</a></li>
+          <li class="nav-item"><a href="presensi_siswa.html" class="nav-link active"><i class="nav-icon fas fa-calendar-check"></i>Presensi Siswa</a></li>
+          <li class="nav-item"><a href="jurnal_siswa.html" class="nav-link"><i class="nav-icon fas fa-book"></i>Jurnal Siswa</a></li>
+        </ul>
+      </nav>
+    </div>
+  </aside>
+  <div class="content-wrapper">
+    <div class="content-header">
+      <div class="container-fluid">
+        <h2>Presensi Siswa PKL</h2>
+        <div class="form-inline mb-3">
+          <label for="bulanSelect" class="mr-2">Pilih Bulan:</label>
+          <select id="bulanSelect" class="form-control mr-2">
+            <option value="7">Juli</option>
+            <option value="8">Agustus</option>
+            <option value="9">September</option>
+            <option value="10">Oktober</option>
+            <option value="11">November</option>
+          </select>
+          <label for="tahunSelect" class="mr-2">Tahun:</label>
+          <select id="tahunSelect" class="form-control"></select>
+        </div>
+        <div class="table-responsive">
+          <div id="presensiTableContainer"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Detail Presensi -->
+<div class="modal fade" id="detailPresensiModal" tabindex="-1" aria-labelledby="detailPresensiModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="detailPresensiModalLabel">Detail Presensi</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" id="detailPresensiBody">
+        <!-- Isi detail presensi -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyDW5b9av9cBHh5AqEnxicBMIP0me-Goy_I",
+    authDomain: "epkl-c628b.firebaseapp.com",
+    projectId: "epkl-c628b",
+    storageBucket: "epkl-c628b.firebasestorage.app",
+    messagingSenderId: "41559318468",
+    appId: "1:41559318468:web:3711f4da0f7087d683ce91",
+    measurementId: "G-ZFWBRF40KQ"
+  };
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+  const db = firebase.firestore();
+
+  function daysInMonth(month, year) {
+    return new Date(year, month, 0).getDate();
+  }
+  function formatDate(year, month, day) {
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  }
+
+  function loadTahunSelect() {
+    const tahunSelect = document.getElementById('tahunSelect');
+    tahunSelect.innerHTML = '';
+    const tahunSekarang = new Date().getFullYear();
+    for (let t = tahunSekarang - 1; t <= tahunSekarang + 1; t++) {
+      tahunSelect.innerHTML += `<option value="${t}" ${t === tahunSekarang ? 'selected' : ''}>${t}</option>`;
+    }
+  }
+
+  function loadPresensiTable() {
+    const bulan = parseInt($('#bulanSelect').val());
+    const tahun = parseInt($('#tahunSelect').val());
+    const tableContainer = document.getElementById('presensiTableContainer');
+    tableContainer.innerHTML = 'Loading...';
+    
+    // Get company and program keahlian from localStorage
+    const namaPerusahaan = localStorage.getItem('perusahaan_nama') || '';
+    const programKeahlian = localStorage.getItem('perusahaan_program_keahlian') || '';
+    
+    // Query students from specific company and program keahlian
+    db.collection('siswa')
+      .get()
+      .then((querySnapshot) => {
+        const students = [];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data.namaPerusahaan === namaPerusahaan && 
+              data.kelas && 
+              data.kelas.toString().toUpperCase().includes(programKeahlian)) {
+            students.push({
+              id: doc.id,
+              ...data
+            });
+          }
+        });
+        
+        if (students.length === 0) {
+          document.getElementById('tableBody').innerHTML = '<tr><td colspan="6" class="text-center">Tidak ada data siswa PKL di perusahaan ini.</td></tr>';
+          return;
+        }
+        
+        // Sort students by name
+        students.sort((a, b) => {
+          const namaA = (a.namaLengkap || a.nis || '').toLowerCase();
+          const namaB = (b.namaLengkap || b.nis || '').toLowerCase();
+          return namaA.localeCompare(namaB);
+        });
+        
+        const nisList = students.map(s => s.nis);
+        db.collection('presensi')
+          .where('tanggal', '>=', `${tahun}-${String(bulan).padStart(2, '0')}-01`)
+          .where('tanggal', '<=', `${tahun}-${String(bulan).padStart(2, '0')}-${daysInMonth(bulan, tahun)}`)
+          .get()
+          .then(qs => {
+            const presensiData = {};
+            qs.forEach(doc => {
+              const data = doc.data();
+              if (!nisList.includes(data.nis)) return;
+              if (!presensiData[data.nis]) presensiData[data.nis] = {};
+              if (!presensiData[data.nis][data.tanggal]) presensiData[data.nis][data.tanggal] = [];
+              presensiData[data.nis][data.tanggal].push(data);
+            });
+            let tableHtml = '<table id="presensiTable" class="display table table-bordered table-striped" style="width:100%"><thead><tr><th>NIS</th><th>Nama Siswa</th><th>Kelas</th>';
+            const hari = daysInMonth(bulan, tahun);
+            let startTanggal = 1;
+            if (bulan === 7) startTanggal = 14;
+            for (let d = startTanggal; d <= hari; d++) {
+              tableHtml += `<th>${d}</th>`;
+            }
+            tableHtml += '</tr></thead><tbody>';
+            students.forEach(siswa => {
+              tableHtml += `<tr><td>${siswa.nis}</td><td>${siswa.namaLengkap || siswa.nis}</td><td>${siswa.kelas || '-'}</td>`;
+              for (let d = startTanggal; d <= hari; d++) {
+                const tgl = formatDate(tahun, bulan, d);
+                const dataHari = (presensiData[siswa.nis] && presensiData[siswa.nis][tgl]) ? presensiData[siswa.nis][tgl] : [];
+                let cell = '';
+                let bg = '';
+                // Cek status khusus
+                const isLibur = dataHari.some(x => x.status === 'Libur');
+                const isSakit = dataHari.some(x => x.status === 'Sakit');
+                const isIjin = dataHari.some(x => x.status === 'Ijin');
+                if (isLibur) {
+                  cell = 'L';
+                  bg = 'style="background:#2196f3;color:white"';
+                } else if (isSakit) {
+                  cell = 'S';
+                  bg = 'style="background:#9c27b0;color:white"';
+                } else if (isIjin) {
+                  cell = 'I';
+                  bg = 'style="background:#ff9800;color:white"';
+                } else if (dataHari.length === 0) {
+                  cell = 'A';
+                  bg = 'style="background:#f44336;color:white"';
+                } else {
+                  const masuk = dataHari.filter(x => x.status === 'Absen Masuk').sort((a, b) => a.jamMasuk > b.jamMasuk ? 1 : -1).pop();
+                  const pulang = dataHari.filter(x => x.status === 'Absen Pulang').sort((a, b) => a.jamPulang > b.jamPulang ? 1 : -1).pop();
+                  if (masuk && pulang) {
+                    let masukTime = [8,0,0];
+                    let pulangTime = [13,0,0];
+                    if (masuk.jamMasuk && /^\d{2}:\d{2}/.test(masuk.jamMasuk)) {
+                      masukTime = masuk.jamMasuk.split(':').map(Number);
+                    }
+                    if (pulang.jamPulang && /^\d{2}:\d{2}/.test(pulang.jamPulang)) {
+                      pulangTime = pulang.jamPulang.split(':').map(Number);
+                    }
+                    const masukDate = new Date(2000,0,1,masukTime[0],masukTime[1],masukTime[2]||0);
+                    const pulangDate = new Date(2000,0,1,pulangTime[0],pulangTime[1],pulangTime[2]||0);
+                    let diff = (pulangDate - masukDate) / (1000*60*60);
+                    if (diff < 0) diff += 24;
+                    
+                    if (diff >= 4) {
+                      cell = 'H';
+                      bg = 'style="background:#4caf50;color:white"';
+                    } else {
+                      cell = 'PLA';
+                      bg = 'style="background:#ffeb3b"';
+                    }
+                  } else if (masuk && !pulang) {
+                    cell = 'TAP';
+                    bg = 'style="background:#ffeb3b"';
+                  } else {
+                    cell = 'A';
+                    bg = 'style="background:#f44336;color:white"';
+                  }
+                }
+                tableHtml += `<td ${bg} style="cursor:pointer" onclick="showDetailPresensiModal('${siswa.nis}','${siswa.namaLengkap || siswa.nis}','${tgl}','${cell}')">${cell}</td>`;
+              }
+              tableHtml += '</tr>';
+            });
+            tableHtml += '</tbody></table>';
+            tableContainer.innerHTML = tableHtml;
+            // Inisialisasi DataTables
+            if ($.fn.DataTable.isDataTable('#presensiTable')) {
+              $('#presensiTable').DataTable().destroy();
+            }
+            $('#presensiTable').DataTable({
+              responsive: true,
+              autoWidth: false,
+              pageLength: 25,
+              order: [[1, 'asc']], // Sort by name
+              columnDefs: [
+                { targets: [0,1,2], orderable: true },
+                { targets: '_all', orderable: false }
+              ]
+            });
+          });
+      });
+  }
+
+  // Show detail presensi modal
+  window.showDetailPresensiModal = function(nis, namaSiswa, tanggal, status) {
+    const modalBody = document.getElementById('detailPresensiBody');
+    modalBody.innerHTML = '<p>Loading...</p>';
+    $('#detailPresensiModal').modal('show');
+
+    // Query presensi data for this student and date
+    db.collection('presensi')
+      .where('nis', '==', nis)
+      .where('tanggal', '==', tanggal)
+      .get()
+      .then(qs => {
+        const presensiData = {};
+        qs.forEach(doc => {
+          const data = doc.data();
+          presensiData[data.status] = data;
+        });
+
+        const hari = parseInt(tanggal.split('-')[2]);
+        const bulan = parseInt(tanggal.split('-')[1]);
+        const tahun = parseInt(tanggal.split('-')[0]);
+        const namaBulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+                          'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'][bulan - 1];
+
+        let detailHtml = `<h5>Detail Presensi ${namaSiswa}</h5>`;
+        detailHtml += `<p><strong>NIS:</strong> ${nis}</p>`;
+        detailHtml += `<p><strong>Tanggal:</strong> ${hari} ${namaBulan} ${tahun}</p>`;
+        detailHtml += `<p><strong>Status:</strong> ${status}</p>`;
+
+        if (presensiData['Absen Masuk']) {
+          detailHtml += `<p><strong>Jam Masuk:</strong> ${presensiData['Absen Masuk'].jamMasuk || '-'}</p>`;
+        }
+        if (presensiData['Absen Pulang']) {
+          detailHtml += `<p><strong>Jam Pulang:</strong> ${presensiData['Absen Pulang'].jamPulang || '-'}</p>`;
+        }
+        if (presensiData['Ijin']) {
+          detailHtml += `<p><strong>Ijin:</strong> ${presensiData['Ijin'].alasan || '-'}</p>`;
+        }
+        if (presensiData['Sakit']) {
+          detailHtml += `<p><strong>Sakit:</strong> ${presensiData['Sakit'].alasan || '-'}</p>`;
+        }
+        if (presensiData['Libur']) {
+          detailHtml += `<p><strong>Libur:</strong> ${presensiData['Libur'].alasan || '-'}</p>`;
+        }
+
+        modalBody.innerHTML = detailHtml;
+      })
+      .catch(error => {
+        console.error("Error fetching presensi data:", error);
+        modalBody.innerHTML = `<p>Gagal memuat data presensi. Error: ${error.message}</p>`;
+      });
+  };
+
+  document.addEventListener('DOMContentLoaded', function() {
+    loadTahunSelect();
+    loadPresensiTable();
+  });
+  $('#bulanSelect, #tahunSelect').on('change', loadPresensiTable);
+
+  // Logout handler
+  document.getElementById('logoutBtn')?.addEventListener('click', function() {
+    localStorage.removeItem('perusahaan_logged_in');
+    localStorage.removeItem('perusahaan_program_keahlian');
+    localStorage.removeItem('perusahaan_nama');
+    window.location.href = 'login.html';
+  });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+<style>
+@media (max-width: 991.98px) {
+  .main-sidebar {
+    left: -250px;
+  }
+  .sidebar-open .main-sidebar {
+    left: 0;
+  }
+  .content-wrapper {
+    margin-left: 0 !important;
+  }
+}
+</style>
+</body>
+</html> 

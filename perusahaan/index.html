@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard Perusahaan</title>
+  <script type="module" src="dashboard.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="hold-transition sidebar-mini layout-fixed">
+<script>
+  if (!localStorage.getItem('perusahaan_logged_in')) {
+    window.location.href = 'login.html';
+  }
+</script>
+<div class="wrapper">
+  <!-- Navbar -->
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="#" id="logoutBtn">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+      </li>
+    </ul>
+  </nav>
+  <!-- Sidebar -->
+  <aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <a href="index.html" class="brand-link">
+      <span class="brand-text font-weight-light">ePKL Perusahaan</span>
+    </a>
+    <div class="sidebar">
+      <nav class="mt-2">
+        <ul class="nav nav-pills nav-sidebar flex-column">
+          <li class="nav-item"><a href="index.html" class="nav-link active"><i class="nav-icon fas fa-tachometer-alt"></i>Dashboard</a></li>
+          <li class="nav-item"><a href="presensi_siswa.html" class="nav-link"><i class="nav-icon fas fa-calendar-check"></i>Presensi Siswa</a></li>
+          <li class="nav-item"><a href="jurnal_siswa.html" class="nav-link"><i class="nav-icon fas fa-book"></i>Jurnal Siswa</a></li>
+        </ul>
+      </nav>
+    </div>
+  </aside>
+  <!-- Content -->
+  <div class="content-wrapper">
+    <div class="content-header">
+      <div class="container-fluid">
+        <h1>Dashboard Perusahaan</h1>
+        <div id="welcome" style="font-size:18px; font-weight:bold; margin-bottom:10px;"></div>
+        <div class="row">
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="info-box">
+              <span class="info-box-icon bg-info elevation-1"><i class="fas fa-users"></i></span>
+              <div class="info-box-content">
+                <span class="info-box-text">Jumlah Siswa PKL</span>
+                <span class="info-box-number" id="jumlahSiswa">0</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="info-box">
+              <span class="info-box-icon bg-success elevation-1"><i class="nav-icon fas fa-calendar-check"></i></span>
+              <div class="info-box-content">
+                <span class="info-box-text">Hadir Hari Ini</span>
+                <span class="info-box-number" id="hadirHariIni">0</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="info-box">
+              <span class="info-box-icon bg-warning elevation-1"><i class="nav-icon fas fa-book"></i></span>
+              <div class="info-box-content">
+                <span class="info-box-text">Jurnal Hari Ini</span>
+                <span class="info-box-number" id="jurnalHariIni">0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script>
+  // Firebase config (harus sama dengan login)
+  const firebaseConfig = {
+    apiKey: "AIzaSyDW5b9av9cBHh5AqEnxicBMIP0me-Goy_I",
+    authDomain: "epkl-c628b.firebaseapp.com",
+    projectId: "epkl-c628b",
+    storageBucket: "epkl-c628b.firebasestorage.app",
+    messagingSenderId: "41559318468",
+    appId: "1:41559318468:web:3711f4da0f7087d683ce91",
+    measurementId: "G-ZFWBRF40KQ"
+  };
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+  const db = firebase.firestore();
+
+  // Tampilkan nama perusahaan di dashboard
+  document.addEventListener('DOMContentLoaded', function() {
+    var namaPerusahaan = localStorage.getItem('perusahaan_nama') || '';
+    var programKeahlian = localStorage.getItem('perusahaan_program_keahlian') || '';
+    
+    if (namaPerusahaan) {
+      document.getElementById('welcome').innerText = 'Selamat datang, ' + namaPerusahaan + ' (' + programKeahlian + ')!';
+      
+      // Query jumlah siswa PKL di perusahaan ini
+      db.collection('siswa')
+        .get()
+        .then(function(snapshot) {
+          let filteredCount = 0;
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            if (data.namaPerusahaan === namaPerusahaan && 
+                data.kelas && 
+                data.kelas.toString().toUpperCase().includes(programKeahlian)) {
+              filteredCount++;
+            }
+          });
+          
+          document.getElementById('jumlahSiswa').innerText = filteredCount;
+          
+          // Hitung siswa yang hadir hari ini
+          const today = new Date();
+          const todayStr = today.toISOString().split('T')[0];
+          let hadirCount = 0;
+          let jurnalCount = 0;
+          
+          snapshot.forEach(doc => {
+            const siswaData = doc.data();
+            if (siswaData.namaPerusahaan === namaPerusahaan && 
+                siswaData.kelas && 
+                siswaData.kelas.toString().toUpperCase().includes(programKeahlian)) {
+              const nis = siswaData.nis;
+              
+              // Check presensi hari ini
+              db.collection('presensi')
+                .where('nis', '==', nis)
+                .where('tanggal', '==', todayStr)
+                .where('status', '==', 'Hadir')
+                .get()
+                .then(presensiSnapshot => {
+                  if (!presensiSnapshot.empty) {
+                    hadirCount++;
+                    document.getElementById('hadirHariIni').innerText = hadirCount;
+                  }
+                });
+              
+              // Check jurnal hari ini
+              db.collection('jurnal')
+                .where('nis', '==', nis)
+                .where('tanggal', '==', todayStr)
+                .get()
+                .then(jurnalSnapshot => {
+                  if (!jurnalSnapshot.empty) {
+                    jurnalCount++;
+                    document.getElementById('jurnalHariIni').innerText = jurnalCount;
+                  }
+                });
+            }
+          });
+        });
+    }
+  });
+
+  // Logout functionality
+  document.getElementById('logoutBtn').addEventListener('click', function() {
+    localStorage.removeItem('perusahaan_logged_in');
+    localStorage.removeItem('perusahaan_program_keahlian');
+    localStorage.removeItem('perusahaan_nama');
+    window.location.href = 'login.html';
+  });
+</script>
+</body>
+</html> 

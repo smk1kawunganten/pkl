@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login Pembimbing</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+</head>
+<body class="hold-transition login-page">
+  <div class="login-box">
+    <div class="login-logo"><b>ePKL</b> Pembimbing</div>
+    <div class="card">
+      <div class="card-body login-card-body">
+        <p class="login-box-msg">Login untuk Pembimbing</p>
+        <form id="loginForm">
+          <div class="input-group mb-3">
+            <input type="text" id="username" class="form-control" placeholder="Username (case-sensitive, contoh: Asnan)" required>
+            <div class="input-group-append">
+              <div class="input-group-text"><span class="fas fa-user"></span></div>
+            </div>
+          </div>
+          <div class="input-group mb-3">
+            <input type="password" id="password" class="form-control" placeholder="Password (contoh: 123)" required>
+            <div class="input-group-append">
+              <div class="input-group-text"><span class="fas fa-lock"></span></div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12">
+              <button type="submit" class="btn btn-primary btn-block">Login</button>
+            </div>
+          </div>
+        </form>
+        <div id="error" style="color:red; margin-top:10px;"></div>
+        <div style="margin-top:10px; color:#555; font-size:13px;">
+          Username dan password harus sesuai dengan data di Firestore.<br>
+          Username dan password <b>case-sensitive</b>.<br>
+          Contoh: Username <b>Asnan</b>, Password <b>123</b>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDW5b9av9cBHh5AqEnxicBMIP0me-Goy_I",
+      authDomain: "epkl-c628b.firebaseapp.com",
+      projectId: "epkl-c628b",
+      storageBucket: "epkl-c628b.firebasestorage.app",
+      messagingSenderId: "41559318468",
+      appId: "1:41559318468:web:3711f4da0f7087d683ce91",
+      measurementId: "G-ZFWBRF40KQ"
+    };
+    // Initialize Firebase
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.firestore();
+
+    document.getElementById('loginForm').onsubmit = function(e) {
+      e.preventDefault();
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      db.collection('guru_pembimbing')
+        .where('username', '==', username)
+        .where('password', '==', password)
+        .get()
+        .then(snapshot => {
+          if (!snapshot.empty) {
+            const user = snapshot.docs[0].data();
+            localStorage.setItem('pembimbing_logged_in', 'true');
+            localStorage.setItem('pembimbing_id', snapshot.docs[0].id);
+            localStorage.setItem('pembimbing_nama', user.namaLengkap);
+            window.location.href = 'index.html';
+          } else {
+            document.getElementById('error').innerText = 'Username atau password salah!';
+          }
+        })
+        .catch(err => {
+          document.getElementById('error').innerText = 'Terjadi error: ' + err;
+        });
+    };
+  </script>
+</body>
+</html> 
